@@ -1,14 +1,15 @@
 use serde::{Deserialize, Serialize};
+use super::vk_type;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[allow(unused)]
-pub struct User {
-    pub id: i32,
-    pub first_name: String,
-    pub last_name: String,
-    pub deactivated: Option<String>,
-    pub is_closed: Option<bool>,
-    pub can_access_closed: Option<bool>
+pub struct MinUser {
+    pub id: vk_type::Integer,
+    pub first_name: vk_type::String,
+    pub last_name: vk_type::String,
+    pub deactivated: Option<vk_type::String>,
+    pub is_closed: Option<vk_type::Boolean>,
+    pub can_access_closed: Option<vk_type::Boolean>
 } //https://vk.com/dev/objects/user
 
 // impl User {

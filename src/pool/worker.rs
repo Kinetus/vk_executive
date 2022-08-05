@@ -4,21 +4,18 @@ use tokio::time::{sleep, Duration};
 
 mod instance;
 mod method;
+mod state;
+mod message;
 
 pub use instance::Instance;
 pub use method::Method;
+pub use state::State;
+pub use message::Message;
 
 pub struct Worker {
     id: usize,
     thread: JoinHandle<()>,
-}
-
-pub enum Message {
-    NewTask {
-        method: Method,
-        oneshot_sender: oneshot::Sender<Result<reqwest::Response, reqwest::Error>>,
-    },
-    Terminate,
+    state: State
 }
 
 impl Worker {
@@ -55,8 +52,6 @@ impl Worker {
                             tokio::spawn(async move {
                                 oneshot_sender.send(req.await);
                             });
-
-                            println!("Worker {} started execution.", id)
                         }
                         Message::Terminate => {
                             println!("Worker {} got a terminate message; terminating.", id);
@@ -73,7 +68,7 @@ impl Worker {
             }
         });
 
-        Worker { thread, id }
+        Worker { thread, id, state: State::Sleeping }
     }
 }
 
@@ -82,7 +77,7 @@ mod tests {
     use std::{collections::HashMap, vec};
 
     use super::*;
-    use crate::types::{User, VKResult, Value};
+    use crate::types::{MinUser, VKResult, Value};
     use crossbeam_channel::unbounded;
     use dotenv::dotenv;
     use std::env;
@@ -115,12 +110,12 @@ mod tests {
             .await
             .unwrap()
             .unwrap()
-            .json::<VKResult<Vec<User>>>()
+            .json::<VKResult<Vec<MinUser>>>()
             .await;
         
         assert_eq!(
             response.unwrap(),
-            VKResult::response(vec!(User {
+            VKResult::response(vec!(MinUser {
                 id: 1,
                 first_name: "Pavel".to_string(),
                 last_name: "Durov".to_string(),
@@ -161,7 +156,7 @@ mod tests {
         }
 
         for (i, oneshot_reciever) in oneshot_recievers.into_iter().enumerate() {
-            println!("{:?}", oneshot_reciever.await.unwrap().unwrap().json::<VKResult<Vec<User>>>().await.unwrap());
+            println!("{:?}", oneshot_reciever.await.unwrap().unwrap().json::<VKResult<Vec<MinUser>>>().await.unwrap());
         }
     }
 }

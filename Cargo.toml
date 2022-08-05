@@ -12,3 +12,4 @@ serde_json = "1.0"
 tokio = { version = "1", features = ["rt", "net", "macros", "rt-multi-thread", "sync"] }
 crossbeam-channel = "0.5"
 dotenv = "0.15.0"
+futures = "0.3.21"

@@ -1,16 +1,23 @@
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize, Serializer};
 use serde::ser::{SerializeMap, SerializeSeq};
+use std::string::String as StdString;
+
+pub type String = StdString;
+pub type Integer = i64;
+pub type Positive = u64;
+pub type Boolean = bool;
+pub type Object = HashMap<StdString, Value>;
+pub type Array = Vec<Value>;
 
 #[derive(Debug, Clone, Deserialize, PartialEq, Eq)]
 pub enum Value {
     String(String),
-    Text(String),
-    Integer(i32),
-    Positive(u32),
-    CheckBox(bool),
-    Object(HashMap<String, Value>),
-    Array(Vec<Value>),
+    Integer(Integer),
+    Positive(Positive),
+    Boolean(Boolean),
+    Object(Object),
+    Array(Array),
 }
 
 impl Serialize for Value {
@@ -22,16 +29,13 @@ impl Serialize for Value {
             Value::String(ref string) => {
                 serializer.serialize_str(string)
             }
-            Value::Text(ref text) => {
-                serializer.serialize_str(text)
-            }
             Value::Integer(ref number) => {
-                serializer.serialize_i32(*number)
+                serializer.serialize_i64(*number)
             }
             Value::Positive(ref number) => {
-                serializer.serialize_u32(*number)
+                serializer.serialize_u64(*number)
             }
-            Value::CheckBox(ref bool) => {
+            Value::Boolean(ref bool) => {
                 serializer.serialize_bool(*bool)
             }
             Value::Object(ref hashmap) => {

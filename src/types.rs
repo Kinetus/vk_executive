@@ -1,8 +1,8 @@
 mod vk_type;
-pub use vk_type::Value;
+pub use vk_type::*;
 
-mod user;
-pub use user::User;
+pub mod user;
+pub use user::MinUser;
 
 mod result;
 pub use result::VKResult;
