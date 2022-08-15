@@ -199,12 +199,17 @@ mod tests {
             }));
         }
 
-        let ress = join_all(vec).await;
+        let responses = join_all(vec).await;
 
-        for (index, res) in ress.into_iter().enumerate() {
-            if let VkResult::response(response) = res.unwrap() {
-                let users: Vec<MinUser> = serde_json::from_value(response).unwrap();
-                assert_eq!(users[0], get_users()[index]);
+        for (index, res) in responses.into_iter().enumerate() {
+            match res.unwrap() {
+                VkResult::response(response) => {
+                    let users: Vec<MinUser> = serde_json::from_value(response).unwrap();
+                    assert_eq!(users[0], get_users()[index]);
+                }
+                VkResult::error(error) => {
+                    panic!("{:?}", error);
+                }
             }
         }
     }

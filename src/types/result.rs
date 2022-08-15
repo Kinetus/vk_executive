@@ -16,6 +16,16 @@ pub struct Error {
     request_params: Option<HashMap<String, String>>,
 }
 
+impl std::fmt::Display for Error {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self.request_params {
+            Some(params) => write!(f, "Error {}: {}\nRequest params: {:#?}", self.error_code, self.error_msg, params),
+            None => write!(f, "Error {}: {}", self.error_code, self.error_msg),
+        }
+        
+    }
+}
+
 impl<T> Result<T> {
     pub fn unwrap(self) -> T {
         match self {

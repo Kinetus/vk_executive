@@ -14,7 +14,7 @@ pub struct Worker {
     #[allow(dead_code)]
     id: usize,
     #[allow(dead_code)]
-    thread: Option<JoinHandle<()>>,
+    thread: JoinHandle<()>,
 }
 
 impl Worker {
@@ -51,7 +51,7 @@ impl Worker {
         });
 
         Worker {
-            thread: Some(thread),
+            thread,
             id,
         }
     }
