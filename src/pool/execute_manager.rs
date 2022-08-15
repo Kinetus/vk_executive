@@ -30,7 +30,7 @@ impl ExecuteManager {
                 match event_receiver.recv() {
                     Ok(event) => match event {
                         Event::FreeWorker => {
-                            ExecuteManager::push_execute(&thread_queue, &work_sender);
+                            ExecuteManager::push_execute(&mut thread_queue.lock().unwrap(), &work_sender);
                         }
                     },
                     Err(_) => {
@@ -47,9 +47,7 @@ impl ExecuteManager {
         }
     }
 
-    fn push_execute(queue: &Arc<Mutex<Vec<MethodWithSender>>>, work_sender: &crossbeam_channel::Sender<Message>) {
-        let mut queue = queue.lock().unwrap();
-
+    fn push_execute(queue: &mut Vec<MethodWithSender>, work_sender: &crossbeam_channel::Sender<Message>) {
         if queue.len() > 0 {
             let methods_count = if queue.len() < 24 { queue.len() } else { 24 };
             let methods_with_senders = queue.drain(0..methods_count);
