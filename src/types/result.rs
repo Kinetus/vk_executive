@@ -1,16 +1,29 @@
+use reqwest::Response;
 use serde::{Deserialize, Serialize, Deserializer};
 use std::collections::HashMap;
 
 #[allow(non_camel_case_types)]
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub enum VKResult<T> {
+pub enum Result<T> {
     response(T),
-    error {
-        error_code: u16,
-        error_msg: String,
-        #[serde(deserialize_with = "hashmap_from_vector_of_pairs")]
-        request_params: Option<HashMap<String, String>>,
-    },
+    error(Error),
+}
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone)]
+pub struct Error {
+    error_code: u16,
+    error_msg: String,
+    #[serde(deserialize_with = "hashmap_from_vector_of_pairs")]
+    request_params: Option<HashMap<String, String>>,
+}
+
+impl<T> Result<T> {
+    pub fn unwrap(self) -> T {
+        match self {
+            Result::response(response) => response,
+            Result::error(_) => panic!("called `Result::unwrap()` on an `Error` value"),
+        }
+    }
 }
 
 fn hashmap_from_vector_of_pairs<'de, D: Deserializer<'de>>(
