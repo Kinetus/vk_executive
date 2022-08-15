@@ -1,5 +1,5 @@
 use super::Message;
-use super::{MethodWithSender, Method};
+use super::{Method, MethodWithSender};
 
 use std::sync::{Arc, Mutex};
 use tokio::task::JoinHandle;
@@ -28,30 +28,11 @@ impl ExecuteManager {
         let thread = tokio::spawn(async move {
             loop {
                 match event_receiver.recv() {
-                    Ok(event) => {
-                        match event {
-                            Event::FreeWorker => {
-                                let mut queue = thread_queue.lock().unwrap();
-
-                                if queue.len() > 0 {
-                                    let methods_count = if queue.len() < 24 { queue.len() } else { 24 };
-                                    let methods_with_senders = queue.drain(0..methods_count);
-
-                                    let mut methods = Vec::new();
-                                    let mut senders = Vec::new();
-
-                                    for MethodWithSender { method, sender } in methods_with_senders {
-                                        methods.push(method);
-                                        senders.push(sender);
-                                    }
-
-                                    work_sender
-                                        .send(Message::NewExecute(methods, senders))
-                                        .unwrap();
-                                }
-                            }
+                    Ok(event) => match event {
+                        Event::FreeWorker => {
+                            ExecuteManager::push_execute(&thread_queue, &work_sender);
                         }
-                    }
+                    },
                     Err(_) => {
                         break;
                     }
@@ -63,6 +44,27 @@ impl ExecuteManager {
             thread,
             queue,
             sender,
+        }
+    }
+
+    fn push_execute(queue: &Arc<Mutex<Vec<MethodWithSender>>>, work_sender: &crossbeam_channel::Sender<Message>) {
+        let mut queue = queue.lock().unwrap();
+
+        if queue.len() > 0 {
+            let methods_count = if queue.len() < 24 { queue.len() } else { 24 };
+            let methods_with_senders = queue.drain(0..methods_count);
+
+            let mut methods = Vec::new();
+            let mut senders = Vec::new();
+
+            for MethodWithSender { method, sender } in methods_with_senders {
+                methods.push(method);
+                senders.push(sender);
+            }
+
+            work_sender
+                .send(Message::NewExecute(methods, senders))
+                .unwrap();
         }
     }
 

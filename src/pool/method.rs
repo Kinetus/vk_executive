@@ -18,7 +18,7 @@ impl Method {
 
 pub struct MethodWithSender {
     pub method: Method,
-    pub sender: oneshot::Sender<VkResult<Value>>, //Result<reqwest::Response, reqwest::Error>
+    pub sender: oneshot::Sender<VkResult<Value>>,
 }
 
 impl MethodWithSender {

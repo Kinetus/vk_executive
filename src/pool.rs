@@ -1,21 +1,21 @@
-use crossbeam_channel::unbounded;
-use tokio::sync::oneshot;
-
-use crate::types::Result as VkResult;
-use serde_json::value::Value;
-
 mod execute_manager;
 mod instance;
 mod message;
 mod method;
 mod worker;
 
-use worker::Worker;
-
-use execute_manager::ExecuteManager;
 pub use instance::Instance;
 pub use message::Message;
 pub use method::{Method, MethodWithSender};
+
+use crossbeam_channel::unbounded;
+use tokio::sync::oneshot;
+
+use crate::types::Result as VkResult;
+use serde_json::value::Value;
+
+use worker::Worker;
+use execute_manager::ExecuteManager;
 
 pub struct InstancePool {
     sender: crossbeam_channel::Sender<Message>,

@@ -8,6 +8,15 @@ pub enum Result<T> {
     error(Error),
 }
 
+impl<T> Result<T> {
+    pub fn unwrap(self) -> T {
+        match self {
+            Result::response(response) => response,
+            Result::error(_) => panic!("called `Result::unwrap()` on an `Error` value"),
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone)]
 pub struct Error {
     error_code: u16,
@@ -26,18 +35,7 @@ impl std::fmt::Display for Error {
     }
 }
 
-impl<T> Result<T> {
-    pub fn unwrap(self) -> T {
-        match self {
-            Result::response(response) => response,
-            Result::error(_) => panic!("called `Result::unwrap()` on an `Error` value"),
-        }
-    }
-}
-
-fn hashmap_from_vector_of_pairs<'de, D: Deserializer<'de>>(
-    d: D,
-) -> std::result::Result<Option<HashMap<String, String>>, D::Error> {
+fn hashmap_from_vector_of_pairs<'de, D: Deserializer<'de>>(d: D) -> std::result::Result<Option<HashMap<String, String>>, D::Error> {
     let s: Vec<Pair> = Deserialize::deserialize(d)?;
 
     if s.len() == 0 {
