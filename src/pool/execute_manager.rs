@@ -1,7 +1,6 @@
 use super::Message;
 use super::{MethodWithSender, Method};
 
-use serde_json;
 use std::sync::{Arc, Mutex};
 use tokio::task::JoinHandle;
 
@@ -10,7 +9,9 @@ pub use event::Event;
 
 pub struct ExecuteManager {
     queue: Arc<Mutex<Vec<MethodWithSender>>>,
+    #[allow(dead_code)]
     sender: crossbeam_channel::Sender<Message>,
+    #[allow(dead_code)]
     thread: JoinHandle<()>,
 }
 
