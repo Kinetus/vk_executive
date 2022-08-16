@@ -88,7 +88,7 @@ impl Worker {
     ) {
         let execute = ExecuteManager::compile_execute(methods);
 
-        let url = format!("https://api.vk.com/method/execute");
+        let url = "https://api.vk.com/method/execute";
         let req = client
             .post(url)
             .header("Content-Length", 0)
