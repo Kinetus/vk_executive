@@ -58,3 +58,15 @@ impl<'a> InstanceBuilder<'a> {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn missing_token() {
+        let builder = InstanceBuilder::new().build();
+
+        assert_eq!(builder.err(), Some(BuildError::MissingParameter(String::from("token"))));
+    }
+}
