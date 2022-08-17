@@ -4,6 +4,7 @@ use std::time::Duration;
 mod instance_builder;
 use instance_builder::InstanceBuilder;
 
+#[derive(PartialEq, Debug)]
 pub struct Instance<'a> {
     token: String,
     api_url: &'a str,
