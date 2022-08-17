@@ -17,7 +17,7 @@ impl<'a> Instance<'a> {
         InstanceBuilder::new()
     }
 
-    pub fn from_tokens(number: usize, tokens: Split<&str>) -> Vec<Instance<'a>> {
+    pub fn from_tokens<'b, I: Iterator<Item = &'b str>>(number: usize, tokens: I) -> Vec<Instance<'a>> {
         let mut instances = Vec::new();
 
         for token in tokens.take(number) {
