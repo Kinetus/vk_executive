@@ -5,7 +5,7 @@ mod method;
 mod worker;
 
 pub use instance::Instance;
-pub use message::Message;
+use message::Message;
 pub use method::{Method, MethodWithSender};
 
 use crossbeam_channel::unbounded;
