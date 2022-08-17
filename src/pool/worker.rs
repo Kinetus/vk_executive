@@ -1,5 +1,3 @@
-use itertools::izip;
-
 use crate::types::{Error as VkError, Result as VkResult};
 use serde_json::value::Value;
 
@@ -120,7 +118,7 @@ impl Worker {
                 VkResult::response(responses) => {
                     let responses: Vec<Value> = serde_json::from_value(responses).unwrap();
 
-                    for (sender, response) in izip!(senders, responses) {
+                    for (sender, response) in senders.into_iter().zip(responses.into_iter()) {
                         if let Some(bool) = response.as_bool() {
                             if bool == false {
                                 sender
