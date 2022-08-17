@@ -1,5 +1,5 @@
-mod vk_type;
-pub use vk_type::*;
+mod value;
+pub use value::*;
 
 pub mod user;
 pub use user::MinUser;
