@@ -53,10 +53,10 @@ impl InstancePool {
         InstancePool::new(instances, reqwest::Client::new)
     }
 
-    pub fn run(&self, method: Method) -> oneshot::Receiver<VkResult<Value>> {
+    pub async fn run(&self, method: Method) -> VkResult<Value> {
         let (oneshot_sender, oneshot_receiver) = oneshot::channel();
 
-        if self.sender.is_empty() {
+        if self.sender.is_empty() { // ! 1 unnecessary method. Need fix
             self.sender
                 .send(Message::NewMethod(MethodWithSender::new(
                     method,
@@ -64,11 +64,10 @@ impl InstancePool {
                 )))
                 .unwrap();
         } else {
-            self.execute_manager
-                .push(MethodWithSender::new(method, oneshot_sender));
+            self.execute_manager.push(MethodWithSender::new(method, oneshot_sender));
         }
 
-        oneshot_receiver
+        oneshot_receiver.await.unwrap()
     }
 }
 
@@ -202,7 +201,8 @@ mod tests {
         let responses = join_all(vec).await;
 
         for (index, res) in responses.into_iter().enumerate() {
-            match res.unwrap() {
+            println!("{:?}", res);
+            match res {
                 VkResult::response(response) => {
                     let users: Vec<MinUser> = serde_json::from_value(response).unwrap();
                     assert_eq!(users[0], get_users()[index]);
