@@ -17,6 +17,15 @@ impl<T> Result<T> {
     }
 }
 
+impl<T: std::fmt::Display> std::fmt::Display for Result<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self {
+            Result::response(t) => write!(f, "Response: {t}"),
+            Result::error(error) => write!(f, "{error}")
+        }
+    }
+}
+
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone)]
 pub struct Error {
     error_code: u16,
