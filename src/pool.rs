@@ -182,7 +182,7 @@ mod tests {
     #[tokio::test(flavor = "multi_thread")]
     async fn ten_tasks_three_workers() {
         dotenv().ok();
-        let instances = Instance::from_tokens(3, env::var("tokens").unwrap().split(","));
+        let instances = Instance::from_tokens(env::var("tokens").unwrap().split(",").take(3));
 
         let pool = InstancePool::new(instances, reqwest::Client::new);
 
