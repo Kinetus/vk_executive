@@ -24,7 +24,7 @@ pub struct InstancePool {
 }
 
 impl InstancePool {
-    pub fn new(instances: Vec<Instance>, new_client: fn() -> reqwest::Client) -> InstancePool {
+    pub fn new(instances: Vec<Instance<'static>>, new_client: fn() -> reqwest::Client) -> InstancePool {
         let mut workers = Vec::with_capacity(instances.len());
         let (sender, receiver) = unbounded();
 
@@ -49,7 +49,7 @@ impl InstancePool {
         }
     }
 
-    pub fn from_instances(instances: Vec<Instance>) -> InstancePool {
+    pub fn from_instances(instances: Vec<Instance<'static>>) -> InstancePool {
         InstancePool::new(instances, reqwest::Client::new)
     }
 
@@ -182,7 +182,7 @@ mod tests {
     #[tokio::test(flavor = "multi_thread")]
     async fn ten_tasks_three_workers() {
         dotenv().ok();
-        let instances = Instance::vector_from_args(3, env::var("tokens").unwrap().split(","), 500);
+        let instances = Instance::from_tokens(3, env::var("tokens").unwrap().split(","));
 
         let pool = InstancePool::new(instances, reqwest::Client::new);
 

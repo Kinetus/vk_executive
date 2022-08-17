@@ -1,33 +1,44 @@
 use std::str::Split;
+use std::time::Duration;
 
-pub struct Instance {
+mod instance_builder;
+use instance_builder::InstanceBuilder;
+
+pub struct Instance<'a> {
     token: String,
-    millis_between_requests: u64,
+    api_url: &'a str,
+    api_version: &'a str,
+    time_between_requests: Duration,
 }
 
-impl Instance {
-    pub fn new(token: String, millis_between_requests: u64) -> Instance {
-        Instance {
-            token,
-            millis_between_requests
-        }
+impl<'a> Instance<'a> {
+    pub fn new<'b>() -> InstanceBuilder<'b> {
+        InstanceBuilder::new()
     }
 
-    pub fn vector_from_args(number: usize, tokens: Split<&str>, millis_between_requests: u64) -> Vec<Instance> {
+    pub fn from_tokens(number: usize, tokens: Split<&str>) -> Vec<Instance<'a>> {
         let mut instances = Vec::new();
 
         for token in tokens.take(number) {
-            instances.push(Instance::new(token.to_string(), millis_between_requests));
+            instances.push(Instance::new().token(String::from(token)).build().unwrap());
         }
         
         instances
     }
 
-    pub fn token(&self) -> String {
-        self.token.clone()
+    pub fn token(&self) -> &String {
+        &self.token
     }
 
-    pub fn millis_between_requests(&self) -> u64 {
-        self.millis_between_requests
+    pub fn api_url(&self) -> &str {
+        self.api_url
+    }
+
+    pub fn api_version(&self) -> &str {
+        self.api_version
+    }
+
+    pub fn time_between_requests(&self) -> Duration {
+        self.time_between_requests
     }
 }

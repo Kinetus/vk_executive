@@ -5,7 +5,7 @@ use serde_json::value::Value;
 
 use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
-use tokio::time::{sleep, Duration};
+use tokio::time::sleep;
 
 use super::execute_manager::{Event, ExecuteManager};
 use super::{Instance, Message, Method, MethodWithSender};
@@ -20,7 +20,7 @@ pub struct Worker {
 impl Worker {
     pub fn new(
         id: usize,
-        instance: Instance,
+        instance: Instance<'static>,
         receiver: crossbeam_channel::Receiver<Message>,
         client: reqwest::Client,
         event_sender: crossbeam_channel::Sender<Event>,
@@ -46,7 +46,7 @@ impl Worker {
                     }
                 }
 
-                sleep(Duration::from_millis(instance.millis_between_requests())).await;
+                sleep(instance.time_between_requests()).await;
             }
         });
 
@@ -62,14 +62,16 @@ impl Worker {
         client: &reqwest::Client,
         instance: &Instance,
     ) {
-        let url = format!("https://api.vk.com/method/{}", method.name);
+        let url = format!("{}/method/{}", instance.api_url(), method.name);
         let req = client
             .post(url)
             .header("Content-Length", 0)
             .query(&method.params)
             .query(&[
                 ("access_token", instance.token()),
-                ("v", "5.103".to_string()),
+            ])
+            .query(&[
+                ("v", instance.api_version()),
             ])
             .send();
 
@@ -88,15 +90,13 @@ impl Worker {
     ) {
         let execute = ExecuteManager::compile_execute(methods);
 
-        let url = "https://api.vk.com/method/execute";
+        let url = format!("{}/method/execute", instance.api_url());
         let req = client
             .post(url)
             .header("Content-Length", 0)
             .query(&[("code", execute)])
-            .query(&[
-                ("access_token", instance.token()),
-                ("v", "5.103".to_string()),
-            ])
+            .query(&[("access_token", instance.token())])
+            .query(&[("v", "5.103")])
             .send();
 
         tokio::spawn(async move {
