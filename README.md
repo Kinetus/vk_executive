@@ -12,8 +12,8 @@ fast_vk = "1.0"
 use fast_vk::{InstancePool, Instance, Method, Value, Result, MinUser};
 use std::collections::HashMap;
 
-#[tokio::main]
-async fn main() {
+#[tokio::test(flavor = "multi_thread")]
+async fn example() {
     let token = ["1234567890abcdef1234567890abcdef1234567890abcdef"].into_iter();
     let instances = Instance::from_tokens(token);
 
@@ -28,6 +28,11 @@ async fn main() {
         params,
     }).await.json();
 
-    println!("{:?}", response);
+    assert_eq!(
+        response,
+        Result::Response(vec![
+            MinUser { id: 1, first_name: String::from("Pavel"), last_name: String::from("Durov"), deactivated: None, is_closed: Some(false), can_access_closed: Some(true)}
+        ])
+    )
 }
 ```
