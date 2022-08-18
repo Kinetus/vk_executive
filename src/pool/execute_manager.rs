@@ -50,7 +50,7 @@ impl ExecuteManager {
     fn push_execute(queue: &mut Vec<MethodWithSender>, work_sender: &crossbeam_channel::Sender<Message>) {
         if queue.len() > 0 {
             let methods_len = if queue.len() < 25 { queue.len() } else { 25 };
-            let methods_with_senders = queue.drain(0..methods_len-1);
+            let methods_with_senders = queue.drain(0..methods_len);
 
             let mut methods = Vec::new();
             let mut senders = Vec::new();
