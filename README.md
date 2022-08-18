@@ -12,8 +12,9 @@ fast_vk = "1.0"
 use fast_vk::{InstancePool, Instance, Method, Value, Result, MinUser};
 use std::collections::HashMap;
 
-#[tokio::test(flavor = "multi_thread")]
-async fn example() {
+#[tokio::main]
+async fn main() {
+    println!("hello");
     let token = ["1234567890abcdef1234567890abcdef1234567890abcdef"].into_iter();
     let instances = Instance::from_tokens(token);
 

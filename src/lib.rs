@@ -1,5 +1,3 @@
-#[doc = include_str!("../README.md")]
-
 mod types;
 pub use types::{Value, Result, MinUser};
 
