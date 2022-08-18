@@ -24,7 +24,7 @@ pub struct InstancePool {
 }
 
 impl InstancePool {
-    pub fn new(instances: Vec<Instance<'static>>, new_client: fn() -> reqwest::Client) -> InstancePool {
+    pub fn new(instances: Vec<Instance<'static>>) -> InstancePool {
         let mut workers = Vec::with_capacity(instances.len());
         let (sender, receiver) = unbounded();
 
@@ -35,7 +35,7 @@ impl InstancePool {
                 index,
                 instance,
                 receiver.clone(),
-                new_client(),
+                reqwest::Client::new(),
                 event_sender.clone(),
             ));
         }
@@ -47,10 +47,6 @@ impl InstancePool {
             sender,
             execute_manager,
         }
-    }
-
-    pub fn from_instances(instances: Vec<Instance<'static>>) -> InstancePool {
-        InstancePool::new(instances, reqwest::Client::new)
     }
 
     pub async fn run(&self, method: Method) -> VkResult<Value> {
@@ -183,7 +179,7 @@ mod tests {
         dotenv().ok();
         let instances = Instance::from_tokens(env::var("tokens").unwrap().split(",").take(3));
 
-        let pool = InstancePool::new(instances, reqwest::Client::new);
+        let pool = InstancePool::new(instances);
 
         let mut vec = Vec::new();
 

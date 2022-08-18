@@ -18,7 +18,7 @@ async fn main() {
     let token = ["1234567890abcdef1234567890abcdef1234567890abcdef"].into_iter();
     let instances = Instance::from_tokens(token);
 
-    let pool = InstancePool::new(instances, reqwest::Client::new);
+    let pool = InstancePool::new(instances);
 
     let mut params = HashMap::new();
 
