@@ -14,9 +14,8 @@ use std::collections::HashMap;
 
 #[tokio::main]
 async fn main() {
-    println!("hello");
     let token = ["1234567890abcdef1234567890abcdef1234567890abcdef"].into_iter();
-    let instances = Instance::from_tokens(token);
+    let instances = Instance::from_tokens(token).into_iter();
 
     let pool = InstancePool::new(instances);
 

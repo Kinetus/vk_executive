@@ -5,11 +5,13 @@ mod method;
 mod worker;
 
 pub use instance::Instance;
-use message::Message;
 pub use method::{Method, MethodWithSender};
+use message::Message;
 
 use crossbeam_channel::unbounded;
 use tokio::sync::oneshot;
+
+use std::iter::ExactSizeIterator;
 
 use crate::types::Result as VkResult;
 use serde_json::value::Value;
@@ -24,7 +26,7 @@ pub struct InstancePool {
 }
 
 impl InstancePool {
-    pub fn new(instances: Vec<Instance<'static>>) -> InstancePool {
+    pub fn new<Instances: ExactSizeIterator<Item = Instance<'static>>>(instances: Instances) -> InstancePool {
         let mut workers = Vec::with_capacity(instances.len());
         let (sender, receiver) = unbounded();
 
@@ -179,7 +181,7 @@ mod tests {
         dotenv().ok();
         let instances = Instance::from_tokens(env::var("tokens").unwrap().split(",").take(3));
 
-        let pool = InstancePool::new(instances);
+        let pool = InstancePool::new(instances.into_iter());
 
         let mut vec = Vec::new();
 
