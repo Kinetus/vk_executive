@@ -32,6 +32,7 @@ impl ExecuteManager {
             loop {
                 match event_receiver.recv() {
                     Ok(event) => match event {
+                        #[allow(unused_must_use)]
                         Event::FreeWorker => {
                             ExecuteManager::push_execute(&mut thread_queue.lock().unwrap(), &work_sender);
                         }
