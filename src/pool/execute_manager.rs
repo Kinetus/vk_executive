@@ -33,7 +33,7 @@ impl ExecuteManager {
                 match event_receiver.recv() {
                     Ok(event) => match event {
                         Event::FreeWorker => {
-                            ExecuteManager::push_execute(&mut thread_queue.lock().unwrap(), &work_sender).unwrap();
+                            ExecuteManager::push_execute(&mut thread_queue.lock().unwrap(), &work_sender);
                         }
                     },
                     Err(_) => {
