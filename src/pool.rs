@@ -203,11 +203,11 @@ mod tests {
         for (index, res) in responses.into_iter().enumerate() {
             println!("{:?}", res);
             match res {
-                VkResult::response(response) => {
+                VkResult::Response(response) => {
                     let users: Vec<MinUser> = serde_json::from_value(response).unwrap();
                     assert_eq!(users[0], get_users()[index]);
                 }
-                VkResult::error(error) => {
+                VkResult::Error(error) => {
                     panic!("{:?}", error);
                 }
             }

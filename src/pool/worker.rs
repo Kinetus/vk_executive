@@ -115,24 +115,24 @@ impl Worker {
             let response: VkResult<Value> = serde_json::from_value(raw_response).unwrap();
 
             match response {
-                VkResult::response(responses) => {
+                VkResult::Response(responses) => {
                     let responses: Vec<Value> = serde_json::from_value(responses).unwrap();
 
                     for (sender, response) in senders.into_iter().zip(responses.into_iter()) {
                         if let Some(bool) = response.as_bool() {
                             if bool == false {
                                 sender
-                                    .send(VkResult::error(execute_errors.remove(0)))
+                                    .send(VkResult::Error(execute_errors.remove(0)))
                                     .unwrap();
                             }
                         } else {
-                            sender.send(VkResult::response(response)).unwrap();
+                            sender.send(VkResult::Response(response)).unwrap();
                         }
                     }
                 }
-                VkResult::error(error) => {
+                VkResult::Error(error) => {
                     for sender in senders {
-                        sender.send(VkResult::error(error.clone())).unwrap();
+                        sender.send(VkResult::Error(error.clone())).unwrap();
                     }
                 }
             }
