@@ -201,10 +201,10 @@ mod tests {
         let responses = join_all(vec).await;
 
         for (index, res) in responses.into_iter().enumerate() {
+            let res: VkResult<Vec<MinUser>> = res.json();
             println!("{:?}", res);
             match res {
-                VkResult::Response(response) => {
-                    let users: Vec<MinUser> = serde_json::from_value(response).unwrap();
+                VkResult::Response(users) => {
                     assert_eq!(users[0], get_users()[index]);
                 }
                 VkResult::Error(error) => {

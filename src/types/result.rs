@@ -1,4 +1,5 @@
-use serde::{Deserialize, Serialize, Deserializer};
+use serde::{Deserialize, Serialize, Deserializer, de::DeserializeOwned};
+use serde_json::Value;
 use std::collections::HashMap;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -15,6 +16,15 @@ impl<T> Result<T> {
             Result::Error(_) => panic!("called `Result::unwrap()` on an `Error` value"),
         }
     }
+}
+
+impl Result<Value> {
+    pub fn json<D: DeserializeOwned>(self) -> Result<D> {
+        match self {
+            Result::Response(response) => Result::Response(serde_json::from_value(response).unwrap()),
+            Result::Error(error) => Result::Error(error)
+        }  
+    } 
 }
 
 impl<T: std::fmt::Display> std::fmt::Display for Result<T> {
