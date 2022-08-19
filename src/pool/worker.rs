@@ -1,6 +1,7 @@
 use crate::types::{Error as VkError, Result as VkResult};
 use serde_json::value::Value;
 
+use std::sync::Arc;
 use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
 use tokio::time::sleep;
@@ -56,7 +57,7 @@ impl Worker {
 
     fn handle_method(
         method: Method,
-        sender: oneshot::Sender<VkResult<Value>>,
+        sender: oneshot::Sender<Result<VkResult<Value>, Arc<reqwest::Error>>>,
         client: &reqwest::Client,
         instance: &Instance,
     ) {
@@ -74,15 +75,22 @@ impl Worker {
             .send();
 
         tokio::spawn(async move {
+            let response = req.await;
+
+            let resp = match response {
+                Ok(response) => Ok(response.json().await.unwrap()),
+                Err(error) => Err(Arc::new(error)),
+            };
+
             sender
-                .send(req.await.unwrap().json().await.unwrap())
+                .send(resp)
                 .unwrap();
         });
     }
 
     fn handle_execute(
         methods: Vec<Method>,
-        senders: Vec<oneshot::Sender<VkResult<Value>>>,
+        senders: Vec<oneshot::Sender<Result<VkResult<Value>, Arc<reqwest::Error>>>>,
         client: &reqwest::Client,
         instance: &Instance,
     ) {
@@ -98,8 +106,21 @@ impl Worker {
             .send();
 
         tokio::spawn(async move {
-            let mut raw_response: Value = req.await.unwrap().json().await.unwrap();
+            let mut raw_response = match req.await {
+                Ok(response) => response.json().await.unwrap(),
+                Err(error) => {
+                    let error = Arc::new(error);
 
+                    for sender in senders {
+                        sender.send(Err(Arc::clone(&error))).unwrap();
+                    }
+
+                    return;
+                }
+            };
+
+
+            //.unwrap().json().await.unwrap();
             let execute_errors_raw = if let Value::Object(ref mut map) = raw_response {
                 map.remove("execute_errors")
             } else {
@@ -122,17 +143,17 @@ impl Worker {
                         if let Some(bool) = response.as_bool() {
                             if bool == false {
                                 sender
-                                    .send(VkResult::Error(execute_errors.remove(0)))
+                                    .send(Ok(VkResult::Error(execute_errors.remove(0))))
                                     .unwrap();
                             }
                         } else {
-                            sender.send(VkResult::Response(response)).unwrap();
+                            sender.send(Ok(VkResult::Response(response))).unwrap();
                         }
                     }
                 }
                 VkResult::Error(error) => {
                     for sender in senders {
-                        sender.send(VkResult::Error(error.clone())).unwrap();
+                        sender.send(Ok(VkResult::Error(error.clone()))).unwrap();
                     }
                 }
             }

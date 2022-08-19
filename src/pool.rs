@@ -7,6 +7,7 @@ mod worker;
 pub use instance::Instance;
 pub use method::{Method, MethodWithSender};
 use message::Message;
+use std::sync::Arc;
 
 use crossbeam_channel::unbounded;
 use tokio::sync::oneshot;
@@ -51,7 +52,7 @@ impl InstancePool {
         }
     }
 
-    pub async fn run(&self, method: Method) -> VkResult<Value> {
+    pub async fn run(&self, method: Method) -> Result<VkResult<Value>, Arc<reqwest::Error>> {
         let (oneshot_sender, oneshot_receiver) = oneshot::channel();
 
         if self.sender.is_empty() { // ! 1 unnecessary method. Need fix
@@ -199,7 +200,7 @@ mod tests {
         let responses = join_all(vec).await;
 
         for (index, res) in responses.into_iter().enumerate() {
-            let res: VkResult<Vec<MinUser>> = res.json();
+            let res: VkResult<Vec<MinUser>> = res.unwrap().json();
             println!("{:?}", res);
             match res {
                 VkResult::Response(users) => {

@@ -3,6 +3,7 @@ use serde_json::value::Value;
 use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use tokio::sync::oneshot;
+use std::sync::Arc;
 
 #[derive(Serialize, Deserialize)]
 pub struct Method {
@@ -18,11 +19,11 @@ impl Method {
 
 pub struct MethodWithSender {
     pub method: Method,
-    pub sender: oneshot::Sender<VkResult<Value>>,
+    pub sender: oneshot::Sender<Result<VkResult<Value>, Arc<reqwest::Error>>>,
 }
 
 impl MethodWithSender {
-    pub fn new(method: Method, oneshot_sender: oneshot::Sender<VkResult<Value>>) -> MethodWithSender {
+    pub fn new(method: Method, oneshot_sender: oneshot::Sender<Result<VkResult<Value>, Arc<reqwest::Error>>>) -> MethodWithSender {
         MethodWithSender { method, sender: oneshot_sender }
     }
 }
