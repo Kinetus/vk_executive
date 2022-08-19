@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize, Deserializer, de::DeserializeOwned};
 use serde_json::Value;
 use std::collections::HashMap;
+use std::result::Result as StdResult;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -19,10 +20,15 @@ impl<T> Result<T> {
 }
 
 impl Result<Value> {
-    pub fn json<D: DeserializeOwned>(self) -> Result<D> {
+    pub fn json<D: DeserializeOwned>(self) -> StdResult<Result<D>, serde_json::Error> {
         match self {
-            Result::Response(response) => Result::Response(serde_json::from_value(response).unwrap()),
-            Result::Error(error) => Result::Error(error)
+            Result::Response(response) => {
+                match serde_json::from_value(response) {
+                    Ok(parsed) => Ok(Result::Response(parsed)),
+                    Err(error) => Err(error)
+                }
+            },
+            Result::Error(error) => Ok(Result::Error(error))
         }  
     } 
 }

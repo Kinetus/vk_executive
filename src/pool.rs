@@ -200,7 +200,7 @@ mod tests {
         let responses = join_all(vec).await;
 
         for (index, res) in responses.into_iter().enumerate() {
-            let res: VkResult<Vec<MinUser>> = res.unwrap().json();
+            let res: VkResult<Vec<MinUser>> = res.unwrap().json().unwrap();
             println!("{:?}", res);
             match res {
                 VkResult::Response(users) => {
