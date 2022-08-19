@@ -26,7 +26,7 @@ async fn main() {
     let response: Result<Vec<MinUser>> = pool.run(Method {
         name: "users.get".to_string(),
         params,
-    }).await.json();
+    }).await.json().unwrap();
 
     assert_eq!(
         response,
