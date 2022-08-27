@@ -6,19 +6,14 @@ use build_error::BuildError;
 
 pub struct InstanceBuilder<'a> {
     token: Option<String>,
-    api_url: Option<&'a str>,
-    api_version: Option<&'a str>,
-    time_between_requests: Option<std::time::Duration>,
+    api_url: &'a str,
+    api_version: &'a str,
+    time_between_requests: std::time::Duration,
 }
 
 impl<'a> InstanceBuilder<'a> {
     pub fn new() -> InstanceBuilder<'a> {
-        InstanceBuilder {
-            token: None,
-            api_url: None,
-            api_version: None,
-            time_between_requests: None,
-        }
+        InstanceBuilder::default()
     }
 
     pub fn token(mut self, token: String) -> InstanceBuilder<'a> {
@@ -27,17 +22,17 @@ impl<'a> InstanceBuilder<'a> {
     }
 
     pub fn api_url(mut self, api_url: &'a str) -> InstanceBuilder<'a> {
-        self.api_url = Some(api_url);
+        self.api_url = api_url;
         self
     }
 
     pub fn api_version(mut self, api_version: &'a str) -> InstanceBuilder<'a> {
-        self.api_version = Some(api_version);
+        self.api_version = api_version;
         self
     }
 
     pub fn time_between_requests(mut self, time_between_requests: std::time::Duration) -> InstanceBuilder<'a> {
-        self.time_between_requests = Some(time_between_requests);
+        self.time_between_requests = time_between_requests;
         self
     }
 
@@ -49,10 +44,21 @@ impl<'a> InstanceBuilder<'a> {
 
         Ok(Instance {
             token,
-            api_url: self.api_url.unwrap_or("https://api.vk.com/"),
-            api_version: self.api_version.unwrap_or("5.103"),
-            time_between_requests: self.time_between_requests.unwrap_or(Duration::from_millis(334)),
+            api_url: self.api_url,
+            api_version: self.api_version,
+            time_between_requests: self.time_between_requests,
         })
+    }
+}
+
+impl<'a> Default for InstanceBuilder<'a> {
+    fn default() -> Self {
+        InstanceBuilder {
+            token: None,
+            api_url: "https://api.vk.com/",
+            api_version: "5.103",
+            time_between_requests: Duration::from_millis(334),
+        }
     }
 }
 
