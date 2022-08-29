@@ -9,7 +9,8 @@ fast_vk = "1.0"
 
 # Example
 ```rust
-use fast_vk::{InstancePool, Instance, Method, Value, Result, MinUser};
+use fast_vk::{InstancePool, Instance, Method, Value as VkValue, Result};
+use serde_json::value::Value;
 use std::collections::HashMap;
 
 #[tokio::main]
@@ -21,17 +22,23 @@ async fn main() {
 
     let mut params = HashMap::new();
 
-    params.insert("user_id".to_string(), Value::Integer(1));
+    params.insert("user_id".to_string(), VkValue::Integer(1));
 
-    let response: Result<Vec<MinUser>> = pool.run(Method {
+    let response: Result<Vec<Value>> = pool.run(Method {
         name: "users.get".to_string(),
         params,
-    }).await.json().unwrap();
+    }).await.unwrap().json().unwrap();
 
     assert_eq!(
         response,
         Result::Response(vec![
-            MinUser { id: 1, first_name: String::from("Pavel"), last_name: String::from("Durov"), deactivated: None, is_closed: Some(false), can_access_closed: Some(true)}
+            serde_json::from_str(r#"{
+                "id": 1,
+                "first_name": "Pavel",
+                "last_name": "Durov",
+                "is_closed": false,
+                "can_access_closed": true
+            }"#).unwrap()
         ])
     )
 }

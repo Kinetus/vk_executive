@@ -86,94 +86,82 @@ mod tests {
     use dotenv::dotenv;
     use std::env;
 
-    use crate::types::{MinUser, Result as VkResult, Value as VkValue};
+    use crate::types::{Result as VkResult, Value as VkValue};
     use std::collections::HashMap;
 
     use futures::future::join_all;
 
     //TODO make vk mock server
-    fn get_users() -> Vec<MinUser> {
+    fn get_users() -> Vec<Value> {
         return vec![
-            MinUser {
-                id: 1,
-                first_name: String::from("Pavel"),
-                last_name: String::from("Durov"),
-                deactivated: None,
-                is_closed: Some(false),
-                can_access_closed: Some(true),
-            },
-            MinUser {
-                id: 2,
-                first_name: String::from("Alexandra"),
-                last_name: String::from("Vladimirova"),
-                deactivated: None,
-                is_closed: Some(true),
-                can_access_closed: Some(false),
-            },
-            MinUser {
-                id: 3,
-                first_name: String::from("DELETED"),
-                last_name: String::from(""),
-                deactivated: Some(String::from("deleted")),
-                is_closed: None,
-                can_access_closed: None,
-            },
-            MinUser {
-                id: 4,
-                first_name: String::from("DELETED"),
-                last_name: String::from(""),
-                deactivated: Some(String::from("deleted")),
-                is_closed: None,
-                can_access_closed: None,
-            },
-            MinUser {
-                id: 5,
-                first_name: String::from("Ilya"),
-                last_name: String::from("Perekopsky"),
-                deactivated: None,
-                is_closed: Some(false),
-                can_access_closed: Some(true),
-            },
-            MinUser {
-                id: 6,
-                first_name: String::from("Nikolay"),
-                last_name: String::from("Durov"),
-                deactivated: None,
-                is_closed: Some(false),
-                can_access_closed: Some(true),
-            },
-            MinUser {
-                id: 7,
-                first_name: String::from("Alexey"),
-                last_name: String::from("Kobylyansky"),
-                deactivated: None,
-                is_closed: Some(true),
-                can_access_closed: Some(false),
-            },
-            MinUser {
-                id: 8,
-                first_name: String::from("Aki"),
-                last_name: String::from("Sepiashvili"),
-                deactivated: None,
-                is_closed: Some(false),
-                can_access_closed: Some(true),
-            },
-            MinUser {
-                id: 9,
-                first_name: String::from("Nastya"),
-                last_name: String::from("Vasilyeva"),
-                deactivated: None,
-                is_closed: Some(true),
-                can_access_closed: Some(false),
-            },
-            MinUser {
-                id: 10,
-                first_name: String::from("Alexander"),
-                last_name: String::from("Kuznetsov"),
-                deactivated: None,
-                is_closed: Some(true),
-                can_access_closed: Some(false),
-            },
+            serde_json::from_str(r#"{
+                "id": 1,
+                "first_name": "Pavel",
+                "last_name": "Durov",
+                "is_closed": false,
+                "can_access_closed": true
+            }"#).unwrap(),
+            serde_json::from_str(r#"{
+                "id": 2,
+                "first_name": "Alexandra",
+                "last_name": "Vladimirova",
+                "is_closed": true,
+                "can_access_closed": false
+            }"#).unwrap(),
+            serde_json::from_str(r#"{
+                "id": 3,
+                "first_name": "DELETED",
+                "last_name": "",
+                "deactivated": "deleted"
+            }"#).unwrap(),
+            serde_json::from_str(r#"{
+                "id": 4,
+                "first_name": "DELETED",
+                "last_name": "",
+                "deactivated": "deleted"
+            }"#).unwrap(),
+            serde_json::from_str(r#"{
+                "id": 5,
+                "first_name": "Ilya",
+                "last_name": "Perekopsky",
+                "is_closed": false,
+                "can_access_closed": true
+            }"#).unwrap(),
+            serde_json::from_str(r#"{
+                "id": 6,
+                "first_name": "Nikolay",
+                "last_name": "Durov",
+                "is_closed": false,
+                "can_access_closed": true
+            }"#).unwrap(),
+            serde_json::from_str(r#"{
+                "id": 7,
+                "first_name": "Alexey",
+                "last_name": "Kobylyansky",
+                "is_closed": true,
+                "can_access_closed": false
+            }"#).unwrap(),
+            serde_json::from_str(r#"{
+                "id": 8,
+                "first_name": "Aki",
+                "last_name": "Sepiashvili",
+                "is_closed": false,
+                "can_access_closed": true
+            }"#).unwrap(),
+            serde_json::from_str(r#"{
+                "id": 9,
+                "first_name": "Nastya",
+                "last_name": "Vasilyeva",
+                "is_closed": true,
+                "can_access_closed": false
+            }"#).unwrap(),
+            serde_json::from_str(r#"{
+                "id": 10,
+                "first_name": "Alexander",
+                "last_name": "Kuznetsov",
+                "is_closed": true,
+                "can_access_closed": false
+            }"#).unwrap()
         ];
     }
 
@@ -200,7 +188,7 @@ mod tests {
         let responses = join_all(vec).await;
 
         for (index, res) in responses.into_iter().enumerate() {
-            let res: VkResult<Vec<MinUser>> = res.unwrap().json().unwrap();
+            let res: VkResult<Vec<Value>> = res.unwrap().json().unwrap();
             println!("{:?}", res);
             match res {
                 VkResult::Response(users) => {
