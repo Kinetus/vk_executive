@@ -82,7 +82,7 @@ impl Drop for InstancePool {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use super::{*, method::Params};
     use dotenv::dotenv;
     use std::env;
     use serde_json::json;
@@ -175,9 +175,11 @@ mod tests {
         let mut vec = Vec::new();
 
         for i in 1..11 {
-            let mut params = serde_json::Map::new();
+            let params = Params::from([
+                (String::from("user_id"), json!(i))
+            ]);
 
-            params.insert("user_id".to_string(), json!(i));
+            // params.insert("user_id".to_string(), json!(i));
 
             vec.push(pool.run(Method {
                 name: "users.get".to_string(),

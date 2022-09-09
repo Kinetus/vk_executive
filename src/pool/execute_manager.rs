@@ -87,7 +87,7 @@ impl ExecuteManager {
         let mut code = String::new();
 
         let method_count = execute.len();
-
+        
         for (index, method) in execute.into_iter().enumerate() {
             code.push_str(
                 format!(

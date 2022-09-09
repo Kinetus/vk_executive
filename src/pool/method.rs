@@ -1,12 +1,11 @@
 use crate::Result as VkResult;
 use serde_json::value::Value;
-use serde::{Deserialize, Serialize};
 use tokio::sync::oneshot;
 use std::sync::Arc;
 
-type Params = serde_json::Map<String, Value>;
+mod params;
+pub use params::Params;
 
-#[derive(Serialize, Deserialize)]
 pub struct Method {
     pub name: String,
     pub params: Params,
