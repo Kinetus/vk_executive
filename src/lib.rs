@@ -2,4 +2,4 @@ mod error;
 pub use error::{Error, Result};
 
 mod pool;
-pub use pool::{Instance, Method, InstancePool};
+pub use pool::{Instance, Method, InstancePool, Params};
