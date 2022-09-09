@@ -1,11 +1,11 @@
 mod execute_manager;
 mod instance;
 mod message;
-mod method;
+pub mod method;
 mod worker;
 
 pub use instance::Instance;
-pub use method::{Method, MethodWithSender};
+pub use method::{Method, MethodWithSender, Params};
 use message::Message;
 use std::sync::Arc;
 
