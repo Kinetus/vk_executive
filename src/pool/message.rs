@@ -1,5 +1,5 @@
 use tokio::sync::oneshot;
-use crate::types::Result as VkResult;
+use crate::Result as VkResult;
 use serde_json::value::Value;
 use super::{MethodWithSender, Method};
 use std::sync::Arc;

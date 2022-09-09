@@ -14,7 +14,7 @@ use tokio::sync::oneshot;
 
 use std::iter::ExactSizeIterator;
 
-use crate::types::Result as VkResult;
+use crate::Result as VkResult;
 use serde_json::value::Value;
 
 use worker::Worker;
@@ -85,9 +85,9 @@ mod tests {
     use super::*;
     use dotenv::dotenv;
     use std::env;
+    use serde_json::json;
 
-    use crate::types::{Result as VkResult, Value as VkValue};
-    use std::collections::HashMap;
+    use crate::Result as VkResult;
 
     use futures::future::join_all;
 
@@ -175,9 +175,9 @@ mod tests {
         let mut vec = Vec::new();
 
         for i in 1..11 {
-            let mut params = HashMap::new();
+            let mut params = serde_json::Map::new();
 
-            params.insert("user_id".to_string(), VkValue::Integer(i));
+            params.insert("user_id".to_string(), json!(i));
 
             vec.push(pool.run(Method {
                 name: "users.get".to_string(),

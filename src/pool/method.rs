@@ -1,18 +1,19 @@
-use crate::types::{Value as VkValue, Result as VkResult};
+use crate::Result as VkResult;
 use serde_json::value::Value;
-use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use tokio::sync::oneshot;
 use std::sync::Arc;
 
+type Params = serde_json::Map<String, Value>;
+
 #[derive(Serialize, Deserialize)]
 pub struct Method {
     pub name: String,
-    pub params: HashMap<String, VkValue>,
+    pub params: Params,
 }
 
 impl Method {
-    pub fn new(name: String, params: HashMap<String, VkValue>) -> Method {
+    pub fn new(name: String, params: Params) -> Method {
         Method { name, params }
     }
 }

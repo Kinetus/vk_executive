@@ -1,4 +1,4 @@
-use crate::types::{Error as VkError, Result as VkResult};
+use crate::{Error as VkError, Result as VkResult};
 use serde_json::value::Value;
 
 use std::sync::Arc;
