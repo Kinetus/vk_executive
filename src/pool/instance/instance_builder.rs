@@ -6,6 +6,7 @@ use build_error::BuildError;
 
 pub struct InstanceBuilder {
     token: Option<String>,
+    client: reqwest::Client,
     api_url: String,
     api_version: String,
     time_between_requests: std::time::Duration,
@@ -53,6 +54,7 @@ impl InstanceBuilder {
 
         Ok(Instance {
             token,
+            client: self.client,
             api_url: self.api_url,
             api_version: self.api_version,
             time_between_requests: self.time_between_requests,
@@ -64,6 +66,7 @@ impl Default for InstanceBuilder {
     fn default() -> Self {
         InstanceBuilder {
             token: None,
+            client: reqwest::Client::new(),
             api_url: String::from("https://api.vk.com/"),
             api_version: String::from("5.103"),
             time_between_requests: Duration::from_millis(334),
@@ -73,6 +76,8 @@ impl Default for InstanceBuilder {
 
 #[cfg(test)]
 mod tests {
+    use reqwest::Client;
+
     use super::*;
 
     #[test]
@@ -90,16 +95,18 @@ mod tests {
         let instance = InstanceBuilder::new()
             .api_url("https://example.com/")
             .token(String::from("token"))
-            .build();
+            .build()
+            .unwrap();
 
         assert_eq!(
-            instance.ok(),
-            Some(Instance {
+            instance,
+            Instance {
                 token: String::from("token"),
+                client: Client::new(),
                 api_url: String::from("https://example.com/"),
                 api_version: String::from("5.103"),
                 time_between_requests: Duration::from_millis(334)
-            })
+            }
         );
     }
 
@@ -110,16 +117,18 @@ mod tests {
             .api_version("5.143")
             .token(String::from("123456789"))
             .time_between_requests(Duration::from_millis(500))
-            .build();
+            .build()
+            .unwrap();
 
         assert_eq!(
-            instance.ok(),
-            Some(Instance {
+            instance,
+            Instance {
                 token: String::from("123456789"),
+                client: Client::new(),
                 api_url: String::from("https://api.vk.ru/"),
                 api_version: String::from("5.143"),
                 time_between_requests: Duration::from_millis(500)
-            })
+            }
         );
     }
 }

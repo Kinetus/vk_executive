@@ -21,7 +21,6 @@ impl Worker {
         id: usize,
         instance: Instance,
         receiver: crossbeam_channel::Receiver<Message>,
-        client: reqwest::Client,
         event_sender: crossbeam_channel::Sender<Event>,
     ) -> Worker {
         let thread = tokio::spawn(async move {
@@ -31,10 +30,10 @@ impl Worker {
                 match receiver.recv() {
                     Ok(message) => match message {
                         Message::NewMethod(MethodWithSender { method, sender }) => {
-                            Worker::handle_method(method, sender, &client, &instance)
+                            Worker::handle_method(method, sender, &instance)
                         }
                         Message::NewExecute(methods, senders) => {
-                            Worker::handle_execute(methods, senders, &client, &instance)
+                            Worker::handle_execute(methods, senders, &instance)
                         }
                         Message::Terminate => {
                             break;
@@ -58,11 +57,10 @@ impl Worker {
     fn handle_method(
         method: Method,
         sender: oneshot::Sender<Result<VkResult<Value>, Arc<reqwest::Error>>>,
-        client: &reqwest::Client,
         instance: &Instance,
     ) {
         let url = format!("{}/method/{}", instance.api_url(), method.name);
-        let req = client
+        let req = instance.client
             .post(url)
             .header("Content-Length", 0)
             .query(&method.params)
@@ -91,13 +89,12 @@ impl Worker {
     fn handle_execute(
         methods: Vec<Method>,
         senders: Vec<oneshot::Sender<Result<VkResult<Value>, Arc<reqwest::Error>>>>,
-        client: &reqwest::Client,
         instance: &Instance,
     ) {
         let execute = ExecuteManager::compile_execute(methods);
 
         let url = format!("{}/method/execute", instance.api_url());
-        let req = client
+        let req = instance.client
             .post(url)
             .header("Content-Length", 0)
             .query(&[("code", execute)])
