@@ -4,39 +4,48 @@ use std::time::Duration;
 mod build_error;
 use build_error::BuildError;
 
-pub struct InstanceBuilder<'a> {
+pub struct InstanceBuilder {
     token: Option<String>,
-    api_url: &'a str,
-    api_version: &'a str,
+    api_url: String,
+    api_version: String,
     time_between_requests: std::time::Duration,
 }
 
-impl<'a> InstanceBuilder<'a> {
-    pub fn new() -> InstanceBuilder<'a> {
+impl InstanceBuilder {
+    pub fn new() -> InstanceBuilder {
         InstanceBuilder::default()
     }
 
-    pub fn token(mut self, token: String) -> InstanceBuilder<'a> {
-        self.token = Some(token);
+    pub fn token<T>(mut self, token: T) -> InstanceBuilder
+    where 
+        T: ToString
+    {
+        self.token = Some(token.to_string());
         self
     }
 
-    pub fn api_url(mut self, api_url: &'a str) -> InstanceBuilder<'a> {
-        self.api_url = api_url;
+    pub fn api_url<T>(mut self, api_url: T) -> InstanceBuilder
+    where 
+        T: ToString
+    {
+        self.api_url = api_url.to_string();
         self
     }
 
-    pub fn api_version(mut self, api_version: &'a str) -> InstanceBuilder<'a> {
-        self.api_version = api_version;
+    pub fn api_version<T>(mut self, api_version: T ) -> InstanceBuilder
+    where 
+        T: ToString
+    {
+        self.api_version = api_version.to_string();
         self
     }
 
-    pub fn time_between_requests(mut self, time_between_requests: std::time::Duration) -> InstanceBuilder<'a> {
+    pub fn time_between_requests(mut self, time_between_requests: std::time::Duration) -> InstanceBuilder {
         self.time_between_requests = time_between_requests;
         self
     }
 
-    pub fn build(self) -> Result<Instance<'a>, BuildError> {
+    pub fn build(self) -> Result<Instance, BuildError> {
         let token = match self.token {
             Some(token) => token,
             None => return Err(BuildError::MissingParameter(String::from("token"))),
@@ -51,12 +60,12 @@ impl<'a> InstanceBuilder<'a> {
     }
 }
 
-impl<'a> Default for InstanceBuilder<'a> {
+impl Default for InstanceBuilder {
     fn default() -> Self {
         InstanceBuilder {
             token: None,
-            api_url: "https://api.vk.com/",
-            api_version: "5.103",
+            api_url: String::from("https://api.vk.com/"),
+            api_version: String::from("5.103"),
             time_between_requests: Duration::from_millis(334),
         }
     }
@@ -87,8 +96,8 @@ mod tests {
             instance.ok(),
             Some(Instance {
                 token: String::from("token"),
-                api_url: "https://example.com/",
-                api_version: "5.103",
+                api_url: String::from("https://example.com/"),
+                api_version: String::from("5.103"),
                 time_between_requests: Duration::from_millis(334)
             })
         );
@@ -107,8 +116,8 @@ mod tests {
             instance.ok(),
             Some(Instance {
                 token: String::from("123456789"),
-                api_url: "https://api.vk.ru/",
-                api_version: "5.143",
+                api_url: String::from("https://api.vk.ru/"),
+                api_version: String::from("5.143"),
                 time_between_requests: Duration::from_millis(500)
             })
         );

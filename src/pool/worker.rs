@@ -19,7 +19,7 @@ pub struct Worker {
 impl Worker {
     pub fn new(
         id: usize,
-        instance: Instance<'static>,
+        instance: Instance,
         receiver: crossbeam_channel::Receiver<Message>,
         client: reqwest::Client,
         event_sender: crossbeam_channel::Sender<Event>,

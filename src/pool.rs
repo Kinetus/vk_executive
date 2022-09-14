@@ -27,7 +27,7 @@ pub struct InstancePool {
 }
 
 impl InstancePool {
-    pub fn new<Instances: ExactSizeIterator<Item = Instance<'static>>>(instances: Instances) -> InstancePool {
+    pub fn new<Instances: ExactSizeIterator<Item = Instance>>(instances: Instances) -> InstancePool {
         let mut workers = Vec::with_capacity(instances.len());
         let (sender, receiver) = unbounded();
 

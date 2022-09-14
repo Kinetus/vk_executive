@@ -4,23 +4,27 @@ mod instance_builder;
 use instance_builder::InstanceBuilder;
 
 #[derive(PartialEq, Debug)]
-pub struct Instance<'a> {
+pub struct Instance {
     token: String,
-    api_url: &'a str,
-    api_version: &'a str,
+    api_url: String,
+    api_version: String,
     time_between_requests: Duration,
 }
 
-impl<'a> Instance<'a> {
-    pub fn new<'b>() -> InstanceBuilder<'b> {
+impl Instance {
+    pub fn new() -> InstanceBuilder {
         InstanceBuilder::new()
     }
 
-    pub fn from_tokens<'b, I: Iterator<Item = &'b str>>(tokens: I) -> Vec<Instance<'a>> {
+    pub fn from_tokens<I, T>(tokens: I) -> Vec<Instance>
+    where 
+        I: Iterator<Item = T>,
+        T: ToString
+    {
         let mut instances = Vec::new();
 
         for token in tokens {
-            instances.push(Instance::new().token(String::from(token)).build().unwrap());
+            instances.push(Instance::new().token(token.to_string()).build().unwrap());
         }
         
         instances
@@ -30,12 +34,12 @@ impl<'a> Instance<'a> {
         &self.token
     }
 
-    pub fn api_url(&self) -> &str {
-        self.api_url
+    pub fn api_url(&self) -> &String {
+        &self.api_url
     }
 
-    pub fn api_version(&self) -> &str {
-        self.api_version
+    pub fn api_version(&self) -> &String {
+        &self.api_version
     }
 
     pub fn time_between_requests(&self) -> Duration {
