@@ -38,7 +38,6 @@ impl InstancePool {
                 index,
                 instance,
                 receiver.clone(),
-                reqwest::Client::new(),
                 event_sender.clone(),
             ));
         }
