@@ -6,8 +6,8 @@ use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
 use tokio::time::sleep;
 
-use super::execute_manager::{Event, ExecuteManager};
-use super::{Instance, Message, Method, MethodWithSender};
+use super::execute_manager::Event;
+use super::{Instance, Message, Method, MethodWithSender, ExecuteCompiler};
 
 pub struct Worker {
     #[allow(dead_code)]
@@ -91,7 +91,7 @@ impl Worker {
         senders: Vec<oneshot::Sender<Result<VkResult<Value>, Arc<reqwest::Error>>>>,
         instance: &Instance,
     ) {
-        let execute = ExecuteManager::compile_execute(methods);
+        let execute = ExecuteCompiler::compile(methods);
 
         let url = format!("{}/method/execute", instance.api_url());
         let req = instance.client
@@ -116,8 +116,6 @@ impl Worker {
                 }
             };
 
-
-            //.unwrap().json().await.unwrap();
             let execute_errors_raw = if let Value::Object(ref mut map) = raw_response {
                 map.remove("execute_errors")
             } else {

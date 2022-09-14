@@ -2,6 +2,9 @@ use serde::{Deserialize, Serialize, Deserializer, de::DeserializeOwned};
 use serde_json::Value;
 use std::collections::HashMap;
 use std::result::Result as StdResult;
+use thiserror::Error as ThisError;
+
+type Params = HashMap<String, String>;
 
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -42,25 +45,42 @@ impl<T: std::fmt::Display> std::fmt::Display for Result<T> {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize, PartialEq, Eq, Clone)]
+#[derive(Debug, ThisError, Deserialize, Serialize, PartialEq, Eq, Clone)]
 pub struct Error {
     error_code: u16,
     error_msg: String,
-    #[serde(deserialize_with = "hashmap_from_vector_of_pairs")]
-    request_params: Option<HashMap<String, String>>,
+    #[serde(deserialize_with = "params_from_pairs")]
+    request_params: Option<Params>,
 }
 
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self.request_params {
-            Some(params) => write!(f, "Error {}: {}\nRequest params: {:#?}", self.error_code, self.error_msg, params),
-            None => write!(f, "Error {}: {}", self.error_code, self.error_msg),
+            Some(params) => {
+                write!(
+                    f,
+                    "Error {}: {}\nRequest params: {:#?}",
+                    self.error_code,
+                    self.error_msg,
+                    params
+                )
+            },
+            None => {
+                write!(
+                    f,
+                    "Error {}: {}",
+                    self.error_code,
+                    self.error_msg
+                )
+            }
         }
-        
     }
 }
 
-fn hashmap_from_vector_of_pairs<'de, D: Deserializer<'de>>(d: D) -> std::result::Result<Option<HashMap<String, String>>, D::Error> {
+fn params_from_pairs<'de, D>(d: D) -> StdResult<Option<Params>, D::Error>
+where
+    D: Deserializer<'de>
+{
     let s: Vec<Pair> = Deserialize::deserialize(d)?;
 
     if s.len() == 0 {
