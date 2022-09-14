@@ -3,10 +3,12 @@ use std::slice;
 use serde_json::value::Value;
 use serde::Serialize;
 
-pub struct Params(Vec<(String, Value)>);
+type Pair = (String, Value);
 
-impl<const N: usize> From<[(String, Value); N]> for Params {
-    fn from(array: [(String, Value); N]) -> Self {
+pub struct Params(Vec<Pair>);
+
+impl<const N: usize> From<[Pair; N]> for Params {
+    fn from(array: [Pair; N]) -> Self {
         Params(Vec::from(array))
     }
 }
@@ -18,8 +20,8 @@ impl Params {
 }
 
 impl IntoIterator for Params {
-    type Item = (String, Value);
-    type IntoIter = std::vec::IntoIter<(String, Value)>;
+    type Item = Pair;
+    type IntoIter = std::vec::IntoIter<Pair>;
     
     fn into_iter(self) -> Self::IntoIter {
         self.0.into_iter()
@@ -27,8 +29,8 @@ impl IntoIterator for Params {
 }
 
 impl<'a> IntoIterator for &'a Params {
-    type Item = &'a (String, Value);
-    type IntoIter = slice::Iter<'a, (String, Value)>;
+    type Item = &'a Pair;
+    type IntoIter = slice::Iter<'a, Pair>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter()
@@ -36,8 +38,8 @@ impl<'a> IntoIterator for &'a Params {
 }
 
 impl<'a> IntoIterator for &'a mut Params {
-    type Item = &'a mut (String, Value);
-    type IntoIter = slice::IterMut<'a, (String, Value)>;
+    type Item = &'a mut Pair;
+    type IntoIter = slice::IterMut<'a, Pair>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.0.iter_mut()
