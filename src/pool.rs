@@ -213,12 +213,7 @@ mod tests {
         for i in 1..11 {
             let params = Params::from([(String::from("user_id"), json!(i))]);
 
-            // params.insert("user_id".to_string(), json!(i));
-
-            vec.push(pool.run(Method {
-                name: "users.get".to_string(),
-                params,
-            }));
+            vec.push(pool.run(Method::new("users.get", params)));
         }
 
         let responses = join_all(vec).await;

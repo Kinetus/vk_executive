@@ -12,8 +12,8 @@ pub struct Method {
 }
 
 impl Method {
-    pub fn new(name: String, params: Params) -> Method {
-        Method { name, params }
+    pub fn new<T: ToString>(name: T, params: Params) -> Method {
+        Method { name: name.to_string(), params }
     }
 }
 
