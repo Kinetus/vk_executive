@@ -5,11 +5,11 @@ mod build_error;
 use build_error::BuildError;
 
 pub struct InstanceBuilder {
-    token: Option<String>,
-    client: reqwest::Client,
-    api_url: String,
-    api_version: String,
-    time_between_requests: std::time::Duration,
+    pub token: Option<String>,
+    pub client: reqwest::Client,
+    pub api_url: String,
+    pub api_version: String,
+    pub time_between_requests: std::time::Duration,
 }
 
 impl InstanceBuilder {

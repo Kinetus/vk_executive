@@ -39,20 +39,4 @@ impl Instance {
         
         instances
     }
-
-    pub fn token(&self) -> &str {
-        &self.token
-    }
-
-    pub fn api_url(&self) -> &str {
-        &self.api_url
-    }
-
-    pub fn api_version(&self) -> &str {
-        &self.api_version
-    }
-
-    pub fn time_between_requests(&self) -> Duration {
-        self.time_between_requests
-    }
 }

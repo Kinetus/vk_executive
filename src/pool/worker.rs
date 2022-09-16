@@ -44,7 +44,7 @@ impl Worker {
                     }
                 }
 
-                sleep(instance.time_between_requests()).await;
+                sleep(instance.time_between_requests).await;
             }
         });
 
@@ -59,16 +59,16 @@ impl Worker {
         sender: oneshot::Sender<Result<VkResult<Value>, Arc<reqwest::Error>>>,
         instance: &Instance,
     ) {
-        let url = format!("{}/method/{}", instance.api_url(), method.name);
+        let url = format!("{}/method/{}", &instance.api_url, method.name);
         let req = instance.client
             .post(url)
             .header("Content-Length", 0)
             .query(&method.params)
             .query(&[
-                ("access_token", instance.token()),
+                ("access_token", &instance.token),
             ])
             .query(&[
-                ("v", instance.api_version()),
+                ("v", &instance.api_version),
             ])
             .send();
 
@@ -93,12 +93,12 @@ impl Worker {
     ) {
         let execute = ExecuteCompiler::compile(methods);
 
-        let url = format!("{}/method/execute", instance.api_url());
+        let url = format!("{}/method/execute", &instance.api_url);
         let req = instance.client
             .post(url)
             .header("Content-Length", 0)
             .query(&[("code", execute)])
-            .query(&[("access_token", instance.token())])
+            .query(&[("access_token", &instance.token)])
             .query(&[("v", "5.103")])
             .send();
 
