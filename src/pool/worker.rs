@@ -56,7 +56,7 @@ impl Worker {
 
     fn handle_method(
         method: Method,
-        sender: oneshot::Sender<Result<VkResult<Value>, Arc<reqwest::Error>>>,
+        sender: oneshot::Sender<Result<VkResult<Value>, Arc<anyhow::Error>>>,
         instance: &Instance,
     ) {
         let url = format!("{}/method/{}", &instance.api_url, method.name);
@@ -76,8 +76,13 @@ impl Worker {
             let response = req.await;
 
             let resp = match response {
-                Ok(response) => Ok(response.json().await.unwrap()),
-                Err(error) => Err(Arc::new(error)),
+                Ok(response) => match response.json().await {
+                    Ok(json) => Ok(json),
+                    Err(error) => {
+                        Err(Arc::new(error.into()))
+                    }
+                },
+                Err(error) => Err(Arc::new(error.into())),
             };
 
             sender
@@ -88,7 +93,7 @@ impl Worker {
 
     fn handle_execute(
         methods: Vec<Method>,
-        senders: Vec<oneshot::Sender<Result<VkResult<Value>, Arc<reqwest::Error>>>>,
+        senders: Vec<oneshot::Sender<Result<VkResult<Value>, Arc<anyhow::Error>>>>,
         instance: &Instance,
     ) {
         let execute = ExecuteCompiler::compile(methods);
@@ -106,7 +111,7 @@ impl Worker {
             let mut raw_response = match req.await {
                 Ok(response) => response.json().await.unwrap(),
                 Err(error) => {
-                    let error = Arc::new(error);
+                    let error = Arc::new(error.into());
 
                     for sender in senders {
                         sender.send(Err(Arc::clone(&error))).unwrap();

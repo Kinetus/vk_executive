@@ -2,6 +2,7 @@ use std::time::Duration;
 
 mod instance_builder;
 use instance_builder::InstanceBuilder;
+use instance_builder::BuildError;
 
 #[derive(Debug)]
 pub struct Instance {
@@ -26,7 +27,7 @@ impl Instance {
         InstanceBuilder::new()
     }
 
-    pub fn from_tokens<I, T>(tokens: I) -> Vec<Instance>
+    pub fn from_tokens<I, T>(tokens: I) -> Result<Vec<Instance>, BuildError>
     where 
         I: Iterator<Item = T>,
         T: ToString
@@ -34,9 +35,9 @@ impl Instance {
         let mut instances = Vec::new();
 
         for token in tokens {
-            instances.push(Instance::new().token(token.to_string()).build().unwrap());
+            instances.push(Instance::new().token(token.to_string()).build()?);
         }
         
-        instances
+        Ok(instances)
     }
 }

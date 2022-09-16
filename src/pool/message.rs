@@ -6,6 +6,6 @@ use std::sync::Arc;
 
 pub enum Message {
     NewMethod(MethodWithSender),
-    NewExecute(Vec<Method>, Vec<oneshot::Sender<Result<VkResult<Value>, Arc<reqwest::Error>>>>),
+    NewExecute(Vec<Method>, Vec<oneshot::Sender<Result<VkResult<Value>, Arc<anyhow::Error>>>>),
     Terminate,
 }

@@ -57,7 +57,7 @@ impl InstancePool {
         }
     }
 
-    pub async fn run(&self, method: Method) -> Result<VkResult<Value>, Arc<reqwest::Error>> {
+    pub async fn run(&self, method: Method) -> Result<VkResult<Value>, Arc<anyhow::Error>> {
         let (oneshot_sender, oneshot_receiver) = oneshot::channel();
 
         if self.sender.is_empty() {
@@ -69,7 +69,7 @@ impl InstancePool {
                 )))
                 .unwrap();
         } else {
-            self.execute_manager.push(MethodWithSender::new(method, oneshot_sender));
+            self.execute_manager.push(MethodWithSender::new(method, oneshot_sender))?;
         }
 
         oneshot_receiver.await.unwrap()
@@ -204,7 +204,7 @@ mod tests {
     #[tokio::test(flavor = "multi_thread")]
     async fn ten_tasks_three_workers() {
         dotenv().ok();
-        let instances = Instance::from_tokens(env::var("tokens").unwrap().split(",").take(3));
+        let instances = Instance::from_tokens(env::var("tokens").unwrap().split(",").take(3)).unwrap();
 
         let pool = InstancePool::new(instances.into_iter());
 

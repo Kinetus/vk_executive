@@ -2,7 +2,7 @@ use super::Instance;
 use std::time::Duration;
 
 mod build_error;
-use build_error::BuildError;
+pub use build_error::BuildError;
 
 pub struct InstanceBuilder {
     pub token: Option<String>,

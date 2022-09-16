@@ -51,9 +51,9 @@ impl ExecuteManager {
         }
     }
 
-    fn push_execute(queue: &mut Vec<MethodWithSender>, work_sender: &crossbeam_channel::Sender<Message>) -> Result<(), ExecuteError> {
+    fn push_execute(queue: &mut Vec<MethodWithSender>, work_sender: &crossbeam_channel::Sender<Message>) -> Result<(), anyhow::Error> {
         if queue.len() == 0 {
-            return Err(ExecuteError::EmptyQueue)
+            return Err(ExecuteError::EmptyQueue.into())
         }
 
         let methods_len = if queue.len() < 25 { queue.len() } else { 25 };
@@ -68,18 +68,19 @@ impl ExecuteManager {
         }
 
         work_sender
-            .send(Message::NewExecute(methods, senders))
-            .unwrap();
+            .send(Message::NewExecute(methods, senders))?;
         
         Ok(())
     }
 
-    pub fn push(&self, method: MethodWithSender) {
+    pub fn push(&self, method: MethodWithSender) -> Result<(), anyhow::Error>{
         let mut queue = self.queue.lock().unwrap();
         queue.push(method);
         
         if queue.len() >= 25 {
-            ExecuteManager::push_execute(&mut queue, &self.sender).unwrap();
+            ExecuteManager::push_execute(&mut queue, &self.sender)?;
         }
+
+        Ok(())
     }
 }
