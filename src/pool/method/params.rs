@@ -14,6 +14,14 @@ impl<const N: usize> From<[Pair; N]> for Params {
 }
 
 impl Params {
+    pub fn new() -> Params {
+        Params(Vec::new())
+    }
+
+    pub fn push<K: ToString>(&mut self, key: K, value: Value) {
+        self.0.push((key.to_string(), value))
+    }
+
     pub fn len(&self) -> usize {
         self.0.len()
     }
