@@ -1,4 +1,5 @@
 use crate::{Error as VkError, Result as VkResult};
+use serde::Serialize;
 use serde_json::value::Value;
 
 use std::sync::Arc;
@@ -60,18 +61,27 @@ impl Worker {
         instance: &Instance,
     ) {
         let url = format!("{}/method/{}", &instance.api_url, method.name);
-        let req = instance.client
+        let mut req = instance.client
             .post(url)
             .header("Content-Length", 0)
-            .query(&method.params)
+            // .query(&method.params)
             .query(&[
                 ("access_token", &instance.token),
             ])
             .query(&[
                 ("v", &instance.api_version),
             ])
-            .send();
+            .build()
+            .unwrap();
+        
+        {
+            let mut pairs = req.url_mut().query_pairs_mut();
+            let serializer = comma_serde_urlencoded::Serializer::new(&mut pairs);
+            method.params.serialize(serializer).unwrap();
+        }
 
+        let req = instance.client.execute(req);
+        
         tokio::spawn(async move {
             let response = req.await;
 

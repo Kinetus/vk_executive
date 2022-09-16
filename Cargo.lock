@@ -51,6 +51,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "comma_serde_urlencoded"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "74e3b033ee8ddfb12f82249dcf338ba0a9f9956858628522919662fb9df659af"
+dependencies = [
+ "form_urlencoded",
+ "itoa",
+ "ryu",
+ "serde",
+]
+
+[[package]]
 name = "core-foundation"
 version = "0.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -106,6 +118,7 @@ name = "fast_vk"
 version = "0.1.1"
 dependencies = [
  "anyhow",
+ "comma_serde_urlencoded",
  "crossbeam-channel",
  "dotenv",
  "futures",
