@@ -6,7 +6,7 @@ mod message;
 mod worker;
 
 pub use instance::Instance;
-pub use method::{Method, MethodWithSender, Params};
+pub use method::{Method, Params};
 use message::Message;
 
 use std::sync::Arc;
@@ -22,6 +22,8 @@ use execute_manager::ExecuteManager;
 pub use execute_compiler::ExecuteCompiler;
 
 use worker::Worker;
+
+pub type Sender = oneshot::Sender<Result<VkResult<Value>, Arc<anyhow::Error>>>;
 
 pub struct InstancePool {
     sender: crossbeam_channel::Sender<Message>,
@@ -63,13 +65,13 @@ impl InstancePool {
         if self.sender.is_empty() {
             // ! 1 unnecessary method. Need fix
             self.sender
-                .send(Message::NewMethod(MethodWithSender::new(
+                .send(Message::NewMethod(
                     method,
                     oneshot_sender,
-                )))
+                ))
                 .unwrap();
         } else {
-            self.execute_manager.push(MethodWithSender::new(method, oneshot_sender))?;
+            self.execute_manager.push((method, oneshot_sender))?;
         }
 
         oneshot_receiver.await.unwrap()

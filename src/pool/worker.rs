@@ -8,7 +8,7 @@ use tokio::task::JoinHandle;
 use tokio::time::sleep;
 
 use super::execute_manager::Event;
-use super::{Instance, Message, Method, MethodWithSender, ExecuteCompiler};
+use super::{Instance, Message, Method, ExecuteCompiler};
 
 pub struct Worker {
     #[allow(dead_code)]
@@ -30,7 +30,7 @@ impl Worker {
 
                 match receiver.recv() {
                     Ok(message) => match message {
-                        Message::NewMethod(MethodWithSender { method, sender }) => {
+                        Message::NewMethod(method, sender) => {
                             Worker::handle_method(method, sender, &instance)
                         }
                         Message::NewExecute(methods, senders) => {
