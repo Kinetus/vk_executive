@@ -92,8 +92,6 @@ mod tests {
     use dotenv::dotenv;
     use std::env;
 
-    use crate::Result as VkResult;
-
     use futures::future::join_all;
 
     //TODO make vk mock server
@@ -218,16 +216,8 @@ mod tests {
         let responses = join_all(vec).await;
 
         for (index, res) in responses.into_iter().enumerate() {
-            let res: VkResult<Vec<Value>> = res.unwrap().json().unwrap();
-            println!("{:?}", res);
-            match res {
-                VkResult::Response(users) => {
-                    assert_eq!(users[0], get_users()[index]);
-                }
-                VkResult::Error(error) => {
-                    panic!("{:?}", error);
-                }
-            }
+            let res: Vec<Value> = serde_json::from_value(res.unwrap().unwrap()).unwrap();
+            assert_eq!(res[0], get_users()[index]);
         }
     }
 }

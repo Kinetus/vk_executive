@@ -1,53 +1,31 @@
-use serde::{Deserialize, Serialize, Deserializer, de::DeserializeOwned};
-use serde_json::Value;
+use serde::{Deserialize, Serialize, Deserializer};
 use std::collections::HashMap;
 use std::result::Result as StdResult;
 use thiserror::Error as ThisError;
 
+pub type Result<T> = StdResult<T, Error>;
+
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum Result<T> {
+pub enum VkResult<T> {
     Response(T),
     Error(Error),
 }
 
-impl<T> Into<StdResult<T, Error>> for Result<T> {
+impl<T> Into<Result<T>> for VkResult<T> {
     fn into(self) -> StdResult<T, Error> {
         match self {
-            Result::Response(response) => StdResult::Ok(response),
-            Result::Error(error) => StdResult::Err(error)
+            VkResult::Response(response) => StdResult::Ok(response),
+            VkResult::Error(error) => StdResult::Err(error)
         }
     }
 }
 
-impl<T> Result<T> {
-    pub fn unwrap(self) -> T {
-        match self {
-            Result::Response(response) => response,
-            Result::Error(_) => panic!("called `Result::unwrap()` on an `Error` value"),
-        }
-    }
-}
-
-impl Result<Value> {
-    pub fn json<D: DeserializeOwned>(self) -> StdResult<Result<D>, serde_json::Error> {
-        match self {
-            Result::Response(response) => {
-                match serde_json::from_value(response) {
-                    Ok(parsed) => Ok(Result::Response(parsed)),
-                    Err(error) => Err(error)
-                }
-            },
-            Result::Error(error) => Ok(Result::Error(error))
-        }  
-    } 
-}
-
-impl<T: std::fmt::Display> std::fmt::Display for Result<T> {
+impl<T: std::fmt::Display> std::fmt::Display for VkResult<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
-            Result::Response(t) => write!(f, "Response: {t}"),
-            Result::Error(error) => write!(f, "{error}")
+            VkResult::Response(t) => write!(f, "Response: {t}"),
+            VkResult::Error(error) => write!(f, "{error}")
         }
     }
 }
