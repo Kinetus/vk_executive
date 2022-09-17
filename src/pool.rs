@@ -89,6 +89,7 @@ impl Drop for InstancePool {
 #[cfg(test)]
 mod tests {
     use super::{method::Params, *};
+    use vk_method::PairsArray;
     use dotenv::dotenv;
     use std::env;
 
@@ -210,7 +211,7 @@ mod tests {
         let mut vec = Vec::new();
 
         for i in 1..11 {
-            let params = Params::try_from([("user_id", i)]).unwrap();
+            let params = Params::try_from(PairsArray([("user_id", i)])).unwrap();
 
             vec.push(pool.run(Method::new("users.get", params)));
         }
