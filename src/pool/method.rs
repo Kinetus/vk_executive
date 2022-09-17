@@ -1,1 +1,0 @@
-pub use vk_method::{Method, Params};

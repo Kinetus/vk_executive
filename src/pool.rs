@@ -1,4 +1,3 @@
-pub mod method;
 mod execute_manager;
 mod execute_compiler;
 mod instance;
@@ -6,7 +5,7 @@ mod message;
 mod worker;
 
 pub use instance::Instance;
-pub use method::{Method, Params};
+use vk_method::Method;
 use message::Message;
 
 use std::sync::Arc;
@@ -90,8 +89,8 @@ impl Drop for InstancePool {
 
 #[cfg(test)]
 mod tests {
-    use super::{method::Params, *};
-    use vk_method::PairsArray;
+    use super::*;
+    use vk_method::{Params, PairsArray};
     use dotenv::dotenv;
     use std::env;
 
