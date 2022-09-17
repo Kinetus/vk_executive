@@ -1,5 +1,5 @@
 use super::Message;
-use super::MethodWithSender;
+use super::Sender;
 
 use std::sync::{Arc, Mutex};
 use tokio::task::JoinHandle;
@@ -9,9 +9,10 @@ pub use error::ExecuteError;
 
 mod event;
 pub use event::Event;
+use vk_method::Method;
 
 pub struct ExecuteManager {
-    queue: Arc<Mutex<Vec<MethodWithSender>>>,
+    queue: Arc<Mutex<Vec<(Method, Sender)>>>,
     #[allow(dead_code)]
     sender: crossbeam_channel::Sender<Message>,
     #[allow(dead_code)]
@@ -51,7 +52,7 @@ impl ExecuteManager {
         }
     }
 
-    fn push_execute(queue: &mut Vec<MethodWithSender>, work_sender: &crossbeam_channel::Sender<Message>) -> Result<(), anyhow::Error> {
+    fn push_execute(queue: &mut Vec<(Method, Sender)>, work_sender: &crossbeam_channel::Sender<Message>) -> Result<(), anyhow::Error> {
         if queue.len() == 0 {
             return Err(ExecuteError::EmptyQueue.into())
         }
@@ -62,7 +63,7 @@ impl ExecuteManager {
         let mut methods = Vec::new();
         let mut senders = Vec::new();
 
-        for MethodWithSender { method, sender } in methods_with_senders {
+        for (method, sender) in methods_with_senders {
             methods.push(method);
             senders.push(sender);
         }
@@ -73,9 +74,9 @@ impl ExecuteManager {
         Ok(())
     }
 
-    pub fn push(&self, method: MethodWithSender) -> Result<(), anyhow::Error>{
+    pub fn push(&self, method: Method, sender: Sender) -> Result<(), anyhow::Error> {
         let mut queue = self.queue.lock().unwrap();
-        queue.push(method);
+        queue.push((method, sender));
         
         if queue.len() >= 25 {
             ExecuteManager::push_execute(&mut queue, &self.sender)?;
