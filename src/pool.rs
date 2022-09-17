@@ -71,7 +71,7 @@ impl InstancePool {
                 ))
                 .unwrap();
         } else {
-            self.execute_manager.push((method, oneshot_sender))?;
+            self.execute_manager.push(method, oneshot_sender)?;
         }
 
         oneshot_receiver.await.unwrap()

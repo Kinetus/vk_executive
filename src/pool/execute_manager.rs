@@ -74,9 +74,9 @@ impl ExecuteManager {
         Ok(())
     }
 
-    pub fn push(&self, method_with_sender: (Method, Sender)) -> Result<(), anyhow::Error> { //mb refactor
+    pub fn push(&self, method: Method, sender: Sender) -> Result<(), anyhow::Error> {
         let mut queue = self.queue.lock().unwrap();
-        queue.push(method_with_sender);
+        queue.push((method, sender));
         
         if queue.len() >= 25 {
             ExecuteManager::push_execute(&mut queue, &self.sender)?;
