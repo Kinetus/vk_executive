@@ -4,13 +4,20 @@ use std::collections::HashMap;
 use std::result::Result as StdResult;
 use thiserror::Error as ThisError;
 
-type Params = HashMap<String, String>;
-
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum Result<T> {
     Response(T),
     Error(Error),
+}
+
+impl<T> Into<StdResult<T, Error>> for Result<T> {
+    fn into(self) -> StdResult<T, Error> {
+        match self {
+            Result::Response(response) => StdResult::Ok(response),
+            Result::Error(error) => StdResult::Err(error)
+        }
+    }
 }
 
 impl<T> Result<T> {
@@ -50,7 +57,7 @@ pub struct Error {
     error_code: u16,
     error_msg: String,
     #[serde(deserialize_with = "params_from_pairs")]
-    request_params: Option<Params>,
+    request_params: Option<HashMap<String, String>>,
 }
 
 impl std::fmt::Display for Error {
@@ -77,7 +84,7 @@ impl std::fmt::Display for Error {
     }
 }
 
-fn params_from_pairs<'de, D>(d: D) -> StdResult<Option<Params>, D::Error>
+fn params_from_pairs<'de, D>(d: D) -> StdResult<Option<HashMap<String, String>>, D::Error>
 where
     D: Deserializer<'de>
 {
