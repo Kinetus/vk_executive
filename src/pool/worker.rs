@@ -3,12 +3,11 @@ use serde::Serialize;
 use serde_json::value::Value;
 
 use std::sync::Arc;
-use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
 use tokio::time::sleep;
 
 use super::execute_manager::Event;
-use super::{Instance, Message, Method, ExecuteCompiler};
+use super::{Instance, Message, Method, ExecuteCompiler, Sender};
 
 pub struct Worker {
     #[allow(dead_code)]
@@ -57,7 +56,7 @@ impl Worker {
 
     fn handle_method(
         method: Method,
-        sender: oneshot::Sender<Result<VkResult<Value>, Arc<anyhow::Error>>>,
+        sender: Sender,
         instance: &Instance,
     ) {
         let url = format!("{}/method/{}", &instance.api_url, method.name);
@@ -103,7 +102,7 @@ impl Worker {
 
     fn handle_execute(
         methods: Vec<Method>,
-        senders: Vec<oneshot::Sender<Result<VkResult<Value>, Arc<anyhow::Error>>>>,
+        senders: Vec<Sender>,
         instance: &Instance,
     ) {
         let execute = ExecuteCompiler::compile(methods);
