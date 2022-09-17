@@ -7,7 +7,8 @@ use tokio::task::JoinHandle;
 use tokio::time::sleep;
 
 use super::execute_manager::Event;
-use super::{Instance, Message, Method, ExecuteCompiler, Sender};
+use super::{Instance, Message, Method, Sender};
+use vk_execute_compiler::ExecuteCompiler;
 
 pub struct Worker {
     #[allow(dead_code)]

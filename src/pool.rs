@@ -1,5 +1,4 @@
 mod execute_manager;
-mod execute_compiler;
 mod instance;
 mod message;
 mod worker;
@@ -18,7 +17,6 @@ use crate::Result as VkResult;
 use serde_json::value::Value;
 
 use execute_manager::ExecuteManager;
-pub use execute_compiler::ExecuteCompiler;
 
 use worker::Worker;
 

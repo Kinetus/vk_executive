@@ -19,3 +19,4 @@ thiserror = "1.0.32"
 anyhow = "1.0.65"
 comma_serde_urlencoded = "0.8.1"
 vk_method = "0.1"
+vk_execute_compiler = { version = "0.1" }
