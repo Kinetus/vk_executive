@@ -2,20 +2,7 @@ use crate::Result as VkResult;
 use serde_json::value::Value;
 use tokio::sync::oneshot;
 use std::sync::Arc;
-
-mod params;
-pub use params::Params;
-
-pub struct Method {
-    pub name: String,
-    pub params: Params,
-}
-
-impl Method {
-    pub fn new<T: ToString>(name: T, params: Params) -> Method {
-        Method { name: name.to_string(), params }
-    }
-}
+pub use vk_method::{Method, Params};
 
 pub struct MethodWithSender {
     pub method: Method,

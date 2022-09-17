@@ -90,7 +90,6 @@ impl Drop for InstancePool {
 mod tests {
     use super::{method::Params, *};
     use dotenv::dotenv;
-    use serde_json::json;
     use std::env;
 
     use crate::Result as VkResult;
@@ -211,7 +210,7 @@ mod tests {
         let mut vec = Vec::new();
 
         for i in 1..11 {
-            let params = Params::from([(String::from("user_id"), json!(i))]);
+            let params = Params::try_from([("user_id", i)]).unwrap();
 
             vec.push(pool.run(Method::new("users.get", params)));
         }
