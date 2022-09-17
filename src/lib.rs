@@ -1,6 +1,6 @@
-mod error;
-pub use error::{Result, Error};
-pub(crate) use error::VkResult;
+mod vk_error;
+pub use vk_error::{Result, Error};
+pub(crate) use vk_error::VkResult;
 
 mod pool;
 pub use pool::{Instance, InstancePool};
