@@ -3,17 +3,18 @@ use std::collections::HashMap;
 use std::result::Result as StdResult;
 use thiserror::Error as ThisError;
 
-pub type Result<T> = StdResult<T, Error>;
+pub type Result<T> = StdResult<T, VkError>;
 
+/// Use this only for parsing response from VK
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum VkResult<T> {
     Response(T),
-    Error(Error),
+    Error(VkError),
 }
 
 impl<T> Into<Result<T>> for VkResult<T> {
-    fn into(self) -> StdResult<T, Error> {
+    fn into(self) -> StdResult<T, VkError> {
         match self {
             VkResult::Response(response) => StdResult::Ok(response),
             VkResult::Error(error) => StdResult::Err(error)
@@ -31,14 +32,14 @@ impl<T: std::fmt::Display> std::fmt::Display for VkResult<T> {
 }
 
 #[derive(Debug, ThisError, Deserialize, Serialize, PartialEq, Eq, Clone)]
-pub struct Error {
+pub struct VkError {
     error_code: u16,
     error_msg: String,
     #[serde(deserialize_with = "params_from_pairs")]
     request_params: Option<HashMap<String, String>>,
 }
 
-impl std::fmt::Display for Error {
+impl std::fmt::Display for VkError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self.request_params {
             Some(params) => {

@@ -1,4 +1,4 @@
-use crate::{Error as VkError, VkResult};
+use crate::{VkError as VkError, VkResult};
 use crate::Result;
 use serde::Serialize;
 use serde_json::value::Value;
