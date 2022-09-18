@@ -162,8 +162,10 @@ impl Worker {
                     }
                 }
                 Err(error) => {
+                    let error = Arc::new(Error::VK(error));
+
                     for sender in senders {
-                        sender.send(Err(Error::VK(error.clone()))).unwrap();
+                        sender.send(Err(Error::Arc(Arc::clone(&error)))).unwrap();
                     }
                 }
             }
