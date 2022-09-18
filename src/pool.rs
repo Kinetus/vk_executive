@@ -7,20 +7,19 @@ pub use instance::Instance;
 use vk_method::Method;
 use message::Message;
 
-use std::sync::Arc;
 use crossbeam_channel::unbounded;
 use tokio::sync::oneshot;
 
 use std::iter::ExactSizeIterator;
 
-use crate::Result as VkResult;
+use crate::Result;
 use serde_json::value::Value;
 
 use execute_manager::ExecuteManager;
 
 use worker::Worker;
 
-pub type Sender = oneshot::Sender<Result<VkResult<Value>, Arc<anyhow::Error>>>;
+pub type Sender = oneshot::Sender<Result<Value>>;
 
 pub struct InstancePool {
     sender: crossbeam_channel::Sender<Message>,
@@ -56,7 +55,7 @@ impl InstancePool {
         }
     }
 
-    pub async fn run(&self, method: Method) -> Result<VkResult<Value>, Arc<anyhow::Error>> {
+    pub async fn run(&self, method: Method) -> Result<Value> {
         let (oneshot_sender, oneshot_receiver) = oneshot::channel();
 
         if self.sender.is_empty() {
@@ -91,8 +90,6 @@ mod tests {
     use vk_method::{Params, PairsArray};
     use dotenv::dotenv;
     use std::env;
-
-    use crate::Result as VkResult;
 
     use futures::future::join_all;
 
@@ -218,16 +215,8 @@ mod tests {
         let responses = join_all(vec).await;
 
         for (index, res) in responses.into_iter().enumerate() {
-            let res: VkResult<Vec<Value>> = res.unwrap().json().unwrap();
-            println!("{:?}", res);
-            match res {
-                VkResult::Response(users) => {
-                    assert_eq!(users[0], get_users()[index]);
-                }
-                VkResult::Error(error) => {
-                    panic!("{:?}", error);
-                }
-            }
+            let res: Vec<Value> = serde_json::from_value(res.unwrap()).unwrap();
+            assert_eq!(res[0], get_users()[index]);
         }
     }
 }
