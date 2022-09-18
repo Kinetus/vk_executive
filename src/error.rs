@@ -7,10 +7,10 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     #[error("VK Error({0})")]
     VK(VkError),
+    #[error("Arc({0})")]
+    Arc(Arc<Error>),
     #[error("Custom({0})")]
-    Custom(anyhow::Error),
-    #[error("Arc Custom({0})")]
-    CustomArc(Arc<anyhow::Error>)
+    Custom(anyhow::Error)
 }
 
 impl From<anyhow::Error> for Error {

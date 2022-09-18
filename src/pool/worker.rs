@@ -121,10 +121,10 @@ impl Worker {
             let mut raw_response = match req.await {
                 Ok(response) => response.json().await.unwrap(),
                 Err(error) => {
-                    let error = Arc::new(error.into());
+                    let error = Arc::new(Error::Custom(error.into()));
 
                     for sender in senders {
-                        sender.send(Err(Error::CustomArc(Arc::clone(&error)))).unwrap();
+                        sender.send(Err(Error::Arc(Arc::clone(&error)))).unwrap();
                     }
 
                     return;
