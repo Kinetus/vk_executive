@@ -7,20 +7,19 @@ pub use instance::Instance;
 use vk_method::Method;
 use message::Message;
 
-use std::sync::Arc;
 use crossbeam_channel::unbounded;
 use tokio::sync::oneshot;
 
 use std::iter::ExactSizeIterator;
 
-use crate::Result as VkResult;
+use crate::Result;
 use serde_json::value::Value;
 
 use execute_manager::ExecuteManager;
 
 use worker::Worker;
 
-pub type Sender = oneshot::Sender<Result<VkResult<Value>, Arc<anyhow::Error>>>;
+pub type Sender = oneshot::Sender<Result<Value>>;
 
 pub struct InstancePool {
     sender: crossbeam_channel::Sender<Message>,
@@ -56,7 +55,7 @@ impl InstancePool {
         }
     }
 
-    pub async fn run(&self, method: Method) -> Result<VkResult<Value>, Arc<anyhow::Error>> {
+    pub async fn run(&self, method: Method) -> Result<Value> {
         let (oneshot_sender, oneshot_receiver) = oneshot::channel();
 
         if self.sender.is_empty() {
@@ -216,7 +215,7 @@ mod tests {
         let responses = join_all(vec).await;
 
         for (index, res) in responses.into_iter().enumerate() {
-            let res: Vec<Value> = serde_json::from_value(res.unwrap().unwrap()).unwrap();
+            let res: Vec<Value> = serde_json::from_value(res.unwrap()).unwrap();
             assert_eq!(res[0], get_users()[index]);
         }
     }

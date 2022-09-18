@@ -2,8 +2,7 @@ use serde::{Deserialize, Serialize, Deserializer};
 use std::collections::HashMap;
 use std::result::Result as StdResult;
 use thiserror::Error as ThisError;
-
-pub type Result<T> = StdResult<T, VkError>;
+use crate::Error;
 
 /// Use this only for parsing response from VK
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
@@ -13,11 +12,20 @@ pub enum VkResult<T> {
     Error(VkError),
 }
 
-impl<T> Into<Result<T>> for VkResult<T> {
+impl<T> Into<Result<T, VkError>> for VkResult<T> {
     fn into(self) -> StdResult<T, VkError> {
         match self {
             VkResult::Response(response) => StdResult::Ok(response),
             VkResult::Error(error) => StdResult::Err(error)
+        }
+    }
+}
+
+impl<T> Into<Result<T, Error>> for VkResult<T> {
+    fn into(self) -> StdResult<T, Error> {
+        match self {
+            VkResult::Response(response) => StdResult::Ok(response),
+            VkResult::Error(error) => StdResult::Err(Error::VK(error))
         }
     }
 }

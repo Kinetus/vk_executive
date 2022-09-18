@@ -1,5 +1,4 @@
-use crate::{VkError as VkError, VkResult};
-use crate::Result;
+use crate::{VkError as VkError, VkResult, Error};
 use serde::Serialize;
 use serde_json::value::Value;
 
@@ -88,12 +87,12 @@ impl Worker {
 
             let resp = match response {
                 Ok(response) => match response.json::<VkResult<Value>>().await {
-                    Ok(json) => Ok(json.into()),
+                    Ok(json) => json.into(),
                     Err(error) => {
-                        Err(Arc::new(error.into()))
+                        Err(Error::Custom(error.into()))
                     }
                 },
-                Err(error) => Err(Arc::new(error.into())),
+                Err(error) => Err(Error::Custom(error.into())),
             };
 
             sender
@@ -125,7 +124,7 @@ impl Worker {
                     let error = Arc::new(error.into());
 
                     for sender in senders {
-                        sender.send(Err(Arc::clone(&error))).unwrap();
+                        sender.send(Err(Error::CustomArc(Arc::clone(&error)))).unwrap();
                     }
 
                     return;
@@ -144,27 +143,27 @@ impl Worker {
                 execute_errors = serde_json::from_value(execute_errors_value).unwrap();
             }
 
-            let response: Result<Value> = serde_json::from_value::<VkResult<Value>>(raw_response).unwrap().into();
+            let response: Result<Value, VkError> = serde_json::from_value::<VkResult<Value>>(raw_response).unwrap().into();
 
             match response {
-                Result::Ok(responses) => {
+                Ok(responses) => {
                     let responses: Vec<Value> = serde_json::from_value(responses).unwrap();
 
                     for (sender, response) in senders.into_iter().zip(responses.into_iter()) {
                         if let Some(bool) = response.as_bool() {
                             if bool == false {
                                 sender
-                                    .send(Ok(Result::Err(execute_errors.remove(0))))
+                                    .send(Err(Error::VK(execute_errors.remove(0))))
                                     .unwrap();
                             }
                         } else {
-                            sender.send(Ok(Result::Ok(response))).unwrap();
+                            sender.send(Ok(response)).unwrap();
                         }
                     }
                 }
-                Result::Err(error) => {
+                Err(error) => {
                     for sender in senders {
-                        sender.send(Ok(Result::Err(error.clone()))).unwrap();
+                        sender.send(Err(Error::VK(error.clone()))).unwrap();
                     }
                 }
             }
