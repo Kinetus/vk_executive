@@ -4,7 +4,7 @@ Kernel for fast collection data from [VK](https://vk.com)
 
 ```toml
 [dependencies]
-fast_vk = "0.1"
+fast_vk = "0.2"
 ```
 
 # Example
