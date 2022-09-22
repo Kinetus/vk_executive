@@ -113,7 +113,7 @@ fn get_users() -> Vec<Value> {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn ten_tasks_three_workers() {
-    dotenv().ok();
+    dotenv().unwrap();
     let instances = Instance::from_tokens(env::var("tokens").unwrap().split(",").take(3)).unwrap();
 
     let pool = InstancePool::new(instances.into_iter());
@@ -136,9 +136,7 @@ async fn ten_tasks_three_workers() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn one_thousand_tasks_ten_workers() {
-    let result = dotenv();
-
-    dbg!(result);
+    dotenv().unwrap();
     
     let instances = Instance::from_tokens(env::var("tokens").unwrap().split(",").take(10)).unwrap();
 
