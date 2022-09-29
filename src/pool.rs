@@ -27,12 +27,12 @@ pub struct InstancePool {
     execute_manager: ExecuteManager,
 }
 
-impl InstancePool {
-    pub fn new<Instances>(instances: Instances) -> InstancePool
-    where
-        Instances: IntoIterator<Item = Instance>,
-        <Instances as IntoIterator>::IntoIter: ExactSizeIterator
-    {
+impl<Instances> From<Instances> for InstancePool
+where 
+    Instances: IntoIterator<Item = Instance>,
+    <Instances as IntoIterator>::IntoIter: ExactSizeIterator
+{
+    fn from(instances: Instances) -> Self {
         let instances = instances.into_iter();
 
         let mut workers = Vec::with_capacity(instances.len());
@@ -55,9 +55,11 @@ impl InstancePool {
             workers,
             sender,
             execute_manager,
-        }
+        }  
     }
+}
 
+impl InstancePool {
     pub async fn run(&self, method: Method) -> Result<Value> {
         let (oneshot_sender, oneshot_receiver) = oneshot::channel();
 
