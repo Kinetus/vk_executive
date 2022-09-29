@@ -116,7 +116,7 @@ async fn ten_tasks_three_workers() {
     dotenv().unwrap();
     let instances = Instance::from_tokens(env::var("tokens").unwrap().split(",").take(3)).unwrap();
 
-    let pool = InstancePool::new(instances.into_iter());
+    let pool = InstancePool::new(instances);
 
     let mut vec = Vec::new();
 
@@ -140,7 +140,7 @@ async fn one_thousand_tasks_ten_workers() {
     
     let instances = Instance::from_tokens(env::var("tokens").unwrap().split(",").take(10)).unwrap();
 
-    let pool = InstancePool::new(instances.into_iter());
+    let pool = InstancePool::new(instances);
 
     let mut vec = Vec::new();
 

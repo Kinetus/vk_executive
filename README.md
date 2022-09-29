@@ -19,7 +19,7 @@ async fn main() {
     let token = ["1234567890abcdef1234567890abcdef1234567890abcdef"].into_iter();
     let instances = Instance::from_tokens(token).unwrap();
 
-    let pool = InstancePool::new(instances.into_iter());
+    let pool = InstancePool::new(instances);
 
     let mut params = HashMap::new();
 
