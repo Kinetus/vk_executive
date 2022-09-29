@@ -5,6 +5,7 @@ use serde_json::value::Value;
 use std::sync::Arc;
 use tokio::task::JoinHandle;
 use tokio::time::sleep;
+use super::{EventSender, TaskReceiver};
 
 use super::execute_manager::Event;
 use super::{Instance, Message, Method, Sender};
@@ -21,15 +22,15 @@ impl Worker {
     pub fn new(
         id: usize,
         instance: Instance,
-        receiver: crossbeam_channel::Receiver<Message>,
-        event_sender: crossbeam_channel::Sender<Event>,
+        receiver: TaskReceiver,
+        event_sender: EventSender,
     ) -> Worker {
         let thread = tokio::spawn(async move {
             loop {
                 event_sender.send(Event::FreeWorker).unwrap();
 
-                match receiver.recv() {
-                    Ok(message) => match message {
+                match receiver.lock().await.recv().await {
+                    Some(message) => match message {
                         Message::NewMethod(method, sender) => {
                             Worker::handle_method(method, sender, &instance)
                         }
@@ -40,8 +41,8 @@ impl Worker {
                             break;
                         }
                     },
-                    Err(e) => {
-                        panic!("{e}");
+                    None => {
+                        break;
                     }
                 }
 
