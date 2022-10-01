@@ -1,13 +1,13 @@
-use tokio::task::JoinHandle;
-use super::EventReceiver;
 use super::Event;
-use tokio::sync::RwLock;
-use std::sync::Arc;
+use super::EventReceiver;
 use std::panic;
+use std::sync::Arc;
+use tokio::sync::RwLock;
+use tokio::task::JoinHandle;
 
 pub struct WorkerWatcher {
     running_workers: Arc<RwLock<usize>>,
-    thread: Option<JoinHandle<()>>
+    thread: Option<JoinHandle<()>>,
 }
 
 impl WorkerWatcher {
@@ -16,25 +16,27 @@ impl WorkerWatcher {
 
         let running_workers_inner = Arc::clone(&running_workers);
         let thread = Some(tokio::spawn(async move {
-                loop {
-                    match receiver.recv().await {
-                        Ok(event) => match event {
-                            Event::GotWork => {
-                                *running_workers_inner.write().await += 1;
-                            }
-                            Event::DoneWork => {
-                                *running_workers_inner.write().await -= 1;
-                            }
-                        },
-                        Err(_) => break,
-                    }
+            loop {
+                match receiver.recv().await {
+                    Ok(event) => match event {
+                        Event::GotWork => {
+                            *running_workers_inner.write().await += 1;
+                        }
+                        Event::DoneWork => {
+                            *running_workers_inner.write().await -= 1;
+                        }
+                    },
+                    Err(_) => break,
                 }
             }
-        ));
+        }));
 
-        WorkerWatcher { thread, running_workers }
+        WorkerWatcher {
+            thread,
+            running_workers,
+        }
     }
-    
+
     pub async fn running_workers(&self) -> usize {
         // we can use unwrap safe because only drop function takes thread
         if self.thread.as_ref().unwrap().is_finished() {
@@ -50,9 +52,7 @@ impl Drop for WorkerWatcher {
         let thread = self.thread.take().unwrap();
 
         if thread.is_finished() {
-            let result = futures::executor::block_on(async {
-                thread.await
-            });
+            let result = futures::executor::block_on(async { thread.await });
 
             if let Err(err) = result {
                 if let Ok(reason) = err.try_into_panic() {
@@ -67,8 +67,8 @@ impl Drop for WorkerWatcher {
 
 #[cfg(test)]
 mod tests {
-    use tokio::sync::broadcast;
     use super::*;
+    use tokio::sync::broadcast;
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn got_work_two_times() {
@@ -122,7 +122,7 @@ mod tests {
         let (event_sender, event_receiver) = broadcast::channel(3);
 
         let _worker_watcher = WorkerWatcher::new(event_receiver);
-        
+
         event_sender.send(Event::GotWork).unwrap();
         event_sender.send(Event::GotWork).unwrap();
         tokio::time::sleep(std::time::Duration::from_nanos(1)).await;
