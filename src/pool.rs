@@ -97,3 +97,22 @@ impl Drop for InstancePool {
         drop(&self.sender);
     }
 }
+
+#[cfg(feature = "thisvk")]
+#[async_trait::async_trait]
+impl thisvk::API for InstancePool {
+    type Error = crate::Error;
+
+    async fn method<T>(&self, method: Method) -> Result<T>
+    where for<'de>
+        T: serde::Deserialize<'de>
+    {
+        match self.run(method).await {
+            Ok(value) => match serde_json::from_value(value) {
+                Ok(result) => Ok(result),
+                Err(error) => Err(crate::Error::Custom(error.into()))
+            },
+            Err(error) => Err(error)
+        }
+    }
+}
