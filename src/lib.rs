@@ -7,3 +7,5 @@ pub use error::{Error, Result};
 
 mod pool;
 pub use pool::{Instance, InstancePool};
+
+pub use vk_method;
