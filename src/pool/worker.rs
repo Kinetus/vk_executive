@@ -1,9 +1,6 @@
 use crate::{Error, VkError, VkResult};
 
-use super::{
-    EventSender, TaskReceiver,
-    Instance, Message, Method, Sender, Event
-};
+use super::{Event, EventSender, Instance, Message, Method, Sender, TaskReceiver};
 
 use vk_execute_compiler::ExecuteCompiler;
 
@@ -31,20 +28,18 @@ impl Worker {
         let thread = tokio::spawn(async move {
             loop {
                 match receiver.lock().await.recv().await {
-                    Some(message) => {
-                        event_sender.send(Event::GotWork).unwrap();
-                        match message {
-                            Message::NewMethod(method, sender) => {
-                                Worker::handle_method(method, sender, &instance)
-                            }
-                            Message::NewExecute(methods, senders) => {
-                                Worker::handle_execute(methods, senders, &instance)
-                            }
-                            Message::Terminate => {
-                                break;
-                            }
+                    Some(message) => match message {
+                        Message::NewMethod(method, sender) => {
+                            Worker::handle_method(method, sender, &instance)
                         }
-                    }
+                        Message::NewExecute(methods, senders) => {
+                            Worker::handle_execute(methods, senders, &instance)
+                        }
+                        Message::Terminate => {
+                            break;
+                        }
+                    },
+
                     None => {
                         break;
                     }

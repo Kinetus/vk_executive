@@ -3,14 +3,14 @@ mod event;
 mod message;
 mod execute_manager;
 mod worker;
-mod worker_watcher;
+mod task_observer;
 
 pub use instance::Instance;
 pub use event::Event;
 use message::Message;
 use execute_manager::ExecuteManager;
 use worker::Worker;
-use worker_watcher::WorkerWatcher;
+use task_observer::TaskObserver;
 
 pub type Sender = oneshot::Sender<Result<Value>>;
 pub type TaskSender = mpsc::UnboundedSender<Message>;
@@ -32,7 +32,8 @@ pub struct InstancePool {
     sender: TaskSender,
     workers: Vec<Worker>,
     execute_manager: ExecuteManager,
-    worker_watcher: WorkerWatcher,
+    task_observer: TaskObserver,
+    event_sender: EventSender,
 }
 
 impl InstancePool {
@@ -47,7 +48,7 @@ impl InstancePool {
         let (sender, receiver) = mpsc::unbounded_channel();
         let receiver = Arc::new(Mutex::new(receiver));
 
-        let (event_sender, event_receiver) = broadcast::channel(instances.len()*2);
+        let (event_sender, event_receiver) = broadcast::channel(20000);
 
         for (index, instance) in instances.into_iter().enumerate() {
             workers.push(Worker::new(
@@ -61,15 +62,21 @@ impl InstancePool {
         InstancePool {
             workers,
             execute_manager: ExecuteManager::new(event_sender.subscribe(), sender.clone()),
-            worker_watcher: WorkerWatcher::new(event_receiver),
+            task_observer: TaskObserver::new(event_receiver),
             sender,
+            event_sender
         }
     }
 
     pub async fn run(&self, method: Method) -> Result<Value> {
+        self.event_sender.send(Event::GotWork).unwrap();
+        tokio::time::sleep(std::time::Duration::from_nanos(1)).await; //make something with this
+
         let (oneshot_sender, oneshot_receiver) = oneshot::channel();
 
-        if self.worker_watcher.running_workers().await < self.workers.len() {
+        let running_tasks = self.task_observer.running_task().await;
+
+        if running_tasks < self.workers.len() {
             self.sender
                 .send(Message::NewMethod(method, oneshot_sender))
                 .unwrap();
