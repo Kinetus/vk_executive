@@ -1,6 +1,6 @@
 # Fast VK 🚀
 
-Kernel for fast collection data from [VK](https://vk.com)
+Kernel for fast data collection from [VK](https://vk.com)
 
 ```toml
 [dependencies]
