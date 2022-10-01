@@ -35,15 +35,14 @@ impl ExecuteManager {
         let thread = tokio::spawn(async move {
             loop {
                 match event_receiver.recv().await {
-                    Some(event) => match event {
+                    Ok(event) => match event {
                         #[allow(unused_must_use)]
-                        Event::FreeWorker => {
+                        Event::DoneWork => {
                             ExecuteManager::push_execute(&mut thread_queue.lock().unwrap(), &task_sender);
                         }
+                        _ => {}
                     },
-                    None => {
-                        break;
-                    }
+                    Err(e) => panic!("{e}"),
                 }
             }
         });

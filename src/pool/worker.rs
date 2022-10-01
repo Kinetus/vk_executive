@@ -27,7 +27,7 @@ impl Worker {
     ) -> Worker {
         let thread = tokio::spawn(async move {
             loop {
-                event_sender.send(Event::FreeWorker).unwrap();
+                event_sender.send(Event::DoneWork).unwrap();
 
                 match receiver.lock().await.recv().await {
                     Some(message) => match message {

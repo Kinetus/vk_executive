@@ -2,12 +2,13 @@ mod execute_manager;
 mod instance;
 mod message;
 mod worker;
+mod worker_watcher;
 
 pub use instance::Instance;
 use vk_method::Method;
 use message::Message;
 
-use tokio::sync::{mpsc, oneshot, Mutex};
+use tokio::sync::{mpsc, oneshot, Mutex, broadcast};
 use std::sync::Arc;
 
 use std::iter::ExactSizeIterator;
@@ -19,35 +20,36 @@ use execute_manager::{Event, ExecuteManager};
 
 use worker::Worker;
 
+use self::worker_watcher::WorkerWatcher;
+
 pub type Sender = oneshot::Sender<Result<Value>>;
 
 pub type TaskSender = mpsc::UnboundedSender<Message>;
 pub type TaskReceiver = Arc<Mutex<mpsc::UnboundedReceiver<Message>>>;
 
-pub type EventSender = mpsc::UnboundedSender<Event>;
-pub type EventReceiver = mpsc::UnboundedReceiver<Event>;
+pub type EventSender = broadcast::Sender<Event>;
+pub type EventReceiver = broadcast::Receiver<Event>;
 
 pub struct InstancePool {
     sender: TaskSender,
-    receiver: TaskReceiver,
     workers: Vec<Worker>,
     execute_manager: ExecuteManager,
+    worker_watcher: WorkerWatcher
 }
 
-impl<Instances> From<Instances> for InstancePool
-where 
-    Instances: IntoIterator<Item = Instance>,
-    <Instances as IntoIterator>::IntoIter: ExactSizeIterator
-{
-    fn from(instances: Instances) -> Self {
+impl InstancePool {
+    pub fn from_instances<Instances>(instances: Instances) -> Self
+    where 
+        Instances: IntoIterator<Item = Instance>,
+        <Instances as IntoIterator>::IntoIter: ExactSizeIterator
+    {
         let instances = instances.into_iter();
-
         let mut workers = Vec::with_capacity(instances.len());
-        let (sender, receiver) = mpsc::unbounded_channel();
 
+        let (sender, receiver) = mpsc::unbounded_channel();
         let receiver = Arc::new(Mutex::new(receiver));
 
-        let (event_sender, event_receiver) = mpsc::unbounded_channel();
+        let (event_sender, event_receiver) = broadcast::channel(instances.len());
 
         for (index, instance) in instances.into_iter().enumerate() {
             workers.push(Worker::new(
@@ -58,34 +60,27 @@ where
             ));
         }
 
-        let execute_manager = ExecuteManager::new(event_receiver, sender.clone());
-
         InstancePool {
             workers,
+            execute_manager: ExecuteManager::new(event_sender.subscribe(), sender.clone()),
+            worker_watcher: WorkerWatcher::new(event_receiver),
             sender,
-            execute_manager,
-            receiver
         }  
     }
-}
 
-impl InstancePool {
     pub async fn run(&self, method: Method) -> Result<Value> {
         let (oneshot_sender, oneshot_receiver) = oneshot::channel();
 
-        // match self.receiver.lock().await.poll_recv() {
-        //     core::task::Poll::Pending => {
-                self.sender
-                .send(Message::NewMethod(
-                    method,
-                    oneshot_sender,
-                ))
-                .unwrap();
-            // },
-            // _ => {
-            //     self.execute_manager.push(method, oneshot_sender)?;
-            // }
-        // };
+        if self.worker_watcher.running_workers().await == self.workers.len() {
+            self.sender
+            .send(Message::NewMethod(
+                method,
+                oneshot_sender,
+            ))
+            .unwrap();
+        } else {
+            self.execute_manager.push(method, oneshot_sender)?;
+        };
         
         oneshot_receiver.await.unwrap()
     }
