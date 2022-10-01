@@ -8,15 +8,20 @@ description = "Low-level VK API library designed for millions requests"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+futures = "0.3.21"
+
 reqwest = { version = "0.11", features = ["json"] }
+
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tokio = { version = "1", features = ["rt", "net", "macros", "rt-multi-thread", "sync"] }
-crossbeam-channel = "0.5"
+
 dotenv = "0.15.0"
-futures = "0.3.21"
+
 thiserror = "1.0.32"
 anyhow = "1.0.65"
-comma_serde_urlencoded = "0.8.1"
+
 vk_method = "0.2"
 vk_execute_compiler = "0.1"
+
+comma_serde_urlencoded = "0.8.1"
