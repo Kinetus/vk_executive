@@ -47,7 +47,7 @@ impl InstancePool {
         let (sender, receiver) = mpsc::unbounded_channel();
         let receiver = Arc::new(Mutex::new(receiver));
 
-        let (event_sender, event_receiver) = broadcast::channel(instances.len());
+        let (event_sender, event_receiver) = broadcast::channel(instances.len()*2);
 
         for (index, instance) in instances.into_iter().enumerate() {
             workers.push(Worker::new(
