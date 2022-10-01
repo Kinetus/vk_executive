@@ -1,11 +1,7 @@
 mod error;
-pub mod event;
-
 pub use error::ExecuteError;
-pub use event::Event;
 
-use super::Message;
-use super::Sender;
+use super::{Message, Sender, Event};
 
 use vk_method::Method;
 

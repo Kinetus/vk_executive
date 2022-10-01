@@ -1,12 +1,14 @@
 pub mod instance;
-mod execute_manager;
+mod event;
 mod message;
+mod execute_manager;
 mod worker;
 mod worker_watcher;
 
 pub use instance::Instance;
-use execute_manager::{Event, ExecuteManager};
+pub use event::Event;
 use message::Message;
+use execute_manager::ExecuteManager;
 use worker::Worker;
 use worker_watcher::WorkerWatcher;
 
