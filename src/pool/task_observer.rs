@@ -21,7 +21,6 @@ impl TaskObserver {
                 match receiver.recv().await {
                     Ok(event) => match event {
                         Event::GotWork => {
-                            println!("got");
                             *running_tasks_inner.write().await += 1;
                         }
                         Event::DoneWork => {
