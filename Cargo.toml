@@ -4,7 +4,7 @@ version = "0.3.3"
 edition = "2021"
 license = "MIT"
 authors = ["Eduard Baturin"]
-description = "Low-level VK API library designed for millions requests per seconds"
+description = "Low-level VK API library designed for millions requests per second"
 documentation = "https://docs.rs/fast_vk/0.3.2/fast_vk/"
 repository = "https://github.com/kinetus/fast_vk"
 
