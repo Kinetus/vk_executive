@@ -173,8 +173,6 @@ async fn one_task_one_worker() {
         params.into(),
     )).await.unwrap();
 
-    println!("res");
-
     assert_eq!(
         response,
         serde_json::json!([

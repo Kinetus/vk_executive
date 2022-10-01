@@ -16,15 +16,14 @@ use serde_json::json;
 
 #[tokio::main]
 async fn main() {
-    let token = ["1234567890abcdef1234567890abcdef1234567890abcdef"].into_iter();
+    let token = ["1234567890abcdef1234567890abcdef1234567890abcdef"];
     let instances = Instance::from_tokens(token).unwrap();
 
-    let pool = InstancePool::new(instances);
+    let pool = InstancePool::from_instances(instances);
 
-    let mut params = HashMap::new();
+    let mut params = Params::new();
+    params.insert("user_id", 1);
 
-    params.insert("user_id".to_string(), "1".to_string());
-    
     let response = pool.run(Method::new(
         "users.get",
         params.into(),
@@ -32,7 +31,7 @@ async fn main() {
 
     assert_eq!(
         response,
-        json!([
+        serde_json::json!([
             {
                 "id": 1,
                 "first_name": "Pavel",
