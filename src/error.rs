@@ -1,4 +1,4 @@
-use crate::vk_error::VkError as VkError;
+use crate::vk_error::VkError;
 use std::sync::Arc;
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -10,7 +10,7 @@ pub enum Error {
     #[error("Arc({0})")]
     Arc(Arc<Error>),
     #[error("Custom({0})")]
-    Custom(anyhow::Error)
+    Custom(anyhow::Error),
 }
 
 impl From<anyhow::Error> for Error {

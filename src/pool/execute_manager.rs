@@ -1,46 +1,45 @@
-use super::Message;
-use super::Sender;
+mod error;
+pub use error::ExecuteError;
+
+use super::{Message, Sender, Event};
+
+use vk_method::Method;
 
 use std::sync::{Arc, Mutex};
 use tokio::task::JoinHandle;
 
-mod error;
-pub use error::ExecuteError;
-
-mod event;
-pub use event::Event;
-use vk_method::Method;
+use super::EventReceiver;
+use super::TaskSender;
 
 pub struct ExecuteManager {
     queue: Arc<Mutex<Vec<(Method, Sender)>>>,
     #[allow(dead_code)]
-    sender: crossbeam_channel::Sender<Message>,
+    sender: TaskSender,
     #[allow(dead_code)]
     thread: JoinHandle<()>,
 }
 
 impl ExecuteManager {
-    pub fn new(
-        event_receiver: crossbeam_channel::Receiver<Event>,
-        work_sender: crossbeam_channel::Sender<Message>,
-    ) -> ExecuteManager {
+    pub fn new(mut event_receiver: EventReceiver, task_sender: TaskSender) -> ExecuteManager {
         let queue = Arc::new(Mutex::new(Vec::new()));
 
         let thread_queue = Arc::clone(&queue);
-        let sender = work_sender.clone();
+        let sender = task_sender.clone();
 
         let thread = tokio::spawn(async move {
             loop {
-                match event_receiver.recv() {
+                match event_receiver.recv().await {
                     Ok(event) => match event {
                         #[allow(unused_must_use)]
-                        Event::FreeWorker => {
-                            ExecuteManager::push_execute(&mut thread_queue.lock().unwrap(), &work_sender);
+                        Event::DoneWork => {
+                            ExecuteManager::push_execute(
+                                &mut thread_queue.lock().unwrap(),
+                                &task_sender,
+                            );
                         }
+                        _ => {}
                     },
-                    Err(_) => {
-                        break;
-                    }
+                    Err(e) => panic!("{e}"),
                 }
             }
         });
@@ -52,9 +51,12 @@ impl ExecuteManager {
         }
     }
 
-    fn push_execute(queue: &mut Vec<(Method, Sender)>, work_sender: &crossbeam_channel::Sender<Message>) -> Result<(), anyhow::Error> {
+    fn push_execute(
+        queue: &mut Vec<(Method, Sender)>,
+        work_sender: &TaskSender,
+    ) -> Result<(), anyhow::Error> {
         if queue.len() == 0 {
-            return Err(ExecuteError::EmptyQueue.into())
+            return Err(ExecuteError::EmptyQueue.into());
         }
 
         let methods_len = if queue.len() < 25 { queue.len() } else { 25 };
@@ -68,16 +70,15 @@ impl ExecuteManager {
             senders.push(sender);
         }
 
-        work_sender
-            .send(Message::NewExecute(methods, senders))?;
-        
+        work_sender.send(Message::NewExecute(methods, senders))?;
+
         Ok(())
     }
 
     pub fn push(&self, method: Method, sender: Sender) -> Result<(), anyhow::Error> {
         let mut queue = self.queue.lock().unwrap();
         queue.push((method, sender));
-        
+
         if queue.len() >= 25 {
             ExecuteManager::push_execute(&mut queue, &self.sender)?;
         }

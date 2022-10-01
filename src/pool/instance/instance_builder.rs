@@ -1,8 +1,9 @@
-use super::Instance;
-use std::time::Duration;
-
 mod build_error;
 pub use build_error::BuildError;
+
+use super::Instance;
+
+use std::time::Duration;
 
 pub struct InstanceBuilder {
     pub token: Option<String>,

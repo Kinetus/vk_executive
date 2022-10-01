@@ -1,8 +1,8 @@
-use std::time::Duration;
 
 mod instance_builder;
-use instance_builder::InstanceBuilder;
-use instance_builder::BuildError;
+use instance_builder::{InstanceBuilder, BuildError};
+
+use std::time::Duration;
 
 #[derive(Debug)]
 pub struct Instance {

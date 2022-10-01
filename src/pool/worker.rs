@@ -1,14 +1,15 @@
-use crate::{VkError as VkError, VkResult, Error};
+use crate::{Error, VkError, VkResult};
+
+use super::{Event, EventSender, Instance, Message, Method, Sender, TaskReceiver};
+
+use vk_execute_compiler::ExecuteCompiler;
+
 use serde::Serialize;
 use serde_json::value::Value;
 
 use std::sync::Arc;
 use tokio::task::JoinHandle;
 use tokio::time::sleep;
-
-use super::execute_manager::Event;
-use super::{Instance, Message, Method, Sender};
-use vk_execute_compiler::ExecuteCompiler;
 
 pub struct Worker {
     #[allow(dead_code)]
@@ -21,15 +22,13 @@ impl Worker {
     pub fn new(
         id: usize,
         instance: Instance,
-        receiver: crossbeam_channel::Receiver<Message>,
-        event_sender: crossbeam_channel::Sender<Event>,
+        receiver: TaskReceiver,
+        event_sender: EventSender,
     ) -> Worker {
         let thread = tokio::spawn(async move {
             loop {
-                event_sender.send(Event::FreeWorker).unwrap();
-
-                match receiver.recv() {
-                    Ok(message) => match message {
+                match receiver.lock().await.recv().await {
+                    Some(message) => match message {
                         Message::NewMethod(method, sender) => {
                             Worker::handle_method(method, sender, &instance)
                         }
@@ -40,40 +39,32 @@ impl Worker {
                             break;
                         }
                     },
-                    Err(e) => {
-                        panic!("{e}");
+
+                    None => {
+                        break;
                     }
                 }
 
                 sleep(instance.time_between_requests).await;
+                event_sender.send(Event::DoneWork).unwrap();
             }
         });
 
-        Worker {
-            thread,
-            id,
-        }
+        Worker { thread, id }
     }
 
-    fn handle_method(
-        method: Method,
-        sender: Sender,
-        instance: &Instance,
-    ) {
+    fn handle_method(method: Method, sender: Sender, instance: &Instance) {
         let url = format!("{}/method/{}", &instance.api_url, method.name);
-        let mut req = instance.client
+        let mut req = instance
+            .client
             .post(url)
             .header("Content-Length", 0)
             // .query(&method.params)
-            .query(&[
-                ("access_token", &instance.token),
-            ])
-            .query(&[
-                ("v", &instance.api_version),
-            ])
+            .query(&[("access_token", &instance.token)])
+            .query(&[("v", &instance.api_version)])
             .build()
             .unwrap();
-        
+
         {
             let mut pairs = req.url_mut().query_pairs_mut();
             let serializer = comma_serde_urlencoded::Serializer::new(&mut pairs);
@@ -81,35 +72,28 @@ impl Worker {
         }
 
         let req = instance.client.execute(req);
-        
+
         tokio::spawn(async move {
             let response = req.await;
 
             let resp = match response {
                 Ok(response) => match response.json::<VkResult<Value>>().await {
                     Ok(json) => json.into(),
-                    Err(error) => {
-                        Err(Error::Custom(error.into()))
-                    }
+                    Err(error) => Err(Error::Custom(error.into())),
                 },
                 Err(error) => Err(Error::Custom(error.into())),
             };
 
-            sender
-                .send(resp)
-                .unwrap();
+            sender.send(resp).unwrap();
         });
     }
 
-    fn handle_execute(
-        methods: Vec<Method>,
-        senders: Vec<Sender>,
-        instance: &Instance,
-    ) {
+    fn handle_execute(methods: Vec<Method>, senders: Vec<Sender>, instance: &Instance) {
         let execute = ExecuteCompiler::compile(methods);
 
         let url = format!("{}/method/execute", &instance.api_url);
-        let req = instance.client
+        let req = instance
+            .client
             .post(url)
             .header("Content-Length", 0)
             .query(&[("code", execute)])
@@ -143,7 +127,10 @@ impl Worker {
                 execute_errors = serde_json::from_value(execute_errors_value).unwrap();
             }
 
-            let response: Result<Value, VkError> = serde_json::from_value::<VkResult<Value>>(raw_response).unwrap().into();
+            let response: Result<Value, VkError> =
+                serde_json::from_value::<VkResult<Value>>(raw_response)
+                    .unwrap()
+                    .into();
 
             match response {
                 Ok(responses) => {
