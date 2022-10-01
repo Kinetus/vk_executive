@@ -69,9 +69,6 @@ impl InstancePool {
     }
 
     pub async fn run(&self, method: Method) -> Result<Value> {
-        self.event_sender.send(Event::GotWork).unwrap();
-        tokio::time::sleep(std::time::Duration::from_nanos(2)).await; //tokio broadcast so slow and need sleep
-
         let (oneshot_sender, oneshot_receiver) = oneshot::channel();
 
         let running_tasks = self.task_observer.running_task().await;
@@ -83,6 +80,9 @@ impl InstancePool {
         } else {
             self.execute_manager.push(method, oneshot_sender)?;
         };
+
+        self.event_sender.send(Event::GotWork).unwrap();
+        tokio::time::sleep(std::time::Duration::from_nanos(2)).await; //tokio broadcast so slow and need sleep
 
         oneshot_receiver.await.unwrap()
     }

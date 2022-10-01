@@ -158,3 +158,33 @@ async fn one_thousand_tasks_ten_workers() {
 
     println!("done");
 }
+#[tokio::test(flavor = "multi_thread")]
+async fn one_task_one_worker() {
+    dotenv().unwrap();
+
+    let instances = Instance::from_tokens(env::var("tokens").unwrap().split(",").take(1)).unwrap();
+    let pool = InstancePool::from_instances(instances);
+
+    let mut params = Params::new();
+    params.insert("user_id", 1);
+
+    let response = pool.run(Method::new(
+        "users.get",
+        params.into(),
+    )).await.unwrap();
+
+    println!("res");
+
+    assert_eq!(
+        response,
+        serde_json::json!([
+            {
+                "id": 1,
+                "first_name": "Pavel",
+                "last_name": "Durov",
+                "is_closed": false,
+                "can_access_closed": true
+            }
+        ])
+    )
+}
