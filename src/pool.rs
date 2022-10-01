@@ -5,11 +5,11 @@ mod worker;
 mod worker_watcher;
 
 pub use instance::Instance;
-use vk_method::Method;
 use message::Message;
+use vk_method::Method;
 
-use tokio::sync::{mpsc, oneshot, Mutex, broadcast};
 use std::sync::Arc;
+use tokio::sync::{broadcast, mpsc, oneshot, Mutex};
 
 use std::iter::ExactSizeIterator;
 
@@ -34,14 +34,14 @@ pub struct InstancePool {
     sender: TaskSender,
     workers: Vec<Worker>,
     execute_manager: ExecuteManager,
-    worker_watcher: WorkerWatcher
+    worker_watcher: WorkerWatcher,
 }
 
 impl InstancePool {
     pub fn from_instances<Instances>(instances: Instances) -> Self
-    where 
+    where
         Instances: IntoIterator<Item = Instance>,
-        <Instances as IntoIterator>::IntoIter: ExactSizeIterator
+        <Instances as IntoIterator>::IntoIter: ExactSizeIterator,
     {
         let instances = instances.into_iter();
         let mut workers = Vec::with_capacity(instances.len());
@@ -65,23 +65,20 @@ impl InstancePool {
             execute_manager: ExecuteManager::new(event_sender.subscribe(), sender.clone()),
             worker_watcher: WorkerWatcher::new(event_receiver),
             sender,
-        }  
+        }
     }
 
     pub async fn run(&self, method: Method) -> Result<Value> {
         let (oneshot_sender, oneshot_receiver) = oneshot::channel();
 
-        if self.worker_watcher.running_workers().await == self.workers.len() {
+        if self.worker_watcher.running_workers().await < self.workers.len() {
             self.sender
-            .send(Message::NewMethod(
-                method,
-                oneshot_sender,
-            ))
-            .unwrap();
+                .send(Message::NewMethod(method, oneshot_sender))
+                .unwrap();
         } else {
             self.execute_manager.push(method, oneshot_sender)?;
         };
-        
+
         oneshot_receiver.await.unwrap()
     }
 }
