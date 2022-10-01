@@ -150,9 +150,11 @@ async fn one_thousand_tasks_ten_workers() {
         vec.push(pool.run(Method::new("users.get", params)));
     }
 
-    let responses = join_all(vec).await;
+    let _responses = join_all(vec).await;
 
-    for res in responses {
-        println!("{:?}", res)
-    }
+    // for res in responses {
+    //     println!("{:?}", res)
+    // }
+
+    println!("done");
 }
