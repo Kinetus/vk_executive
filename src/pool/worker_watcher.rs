@@ -1,6 +1,7 @@
-use super::Event;
-use super::EventReceiver;
+use super::{Event, EventReceiver};
+
 use std::panic;
+
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tokio::task::JoinHandle;

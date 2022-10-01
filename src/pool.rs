@@ -1,34 +1,30 @@
+pub mod instance;
 mod execute_manager;
-mod instance;
 mod message;
 mod worker;
 mod worker_watcher;
 
 pub use instance::Instance;
-use message::Message;
-use vk_method::Method;
-
-use std::sync::Arc;
-use tokio::sync::{broadcast, mpsc, oneshot, Mutex};
-
-use std::iter::ExactSizeIterator;
-
-use crate::Result;
-use serde_json::value::Value;
-
 use execute_manager::{Event, ExecuteManager};
-
+use message::Message;
 use worker::Worker;
-
-use self::worker_watcher::WorkerWatcher;
+use worker_watcher::WorkerWatcher;
 
 pub type Sender = oneshot::Sender<Result<Value>>;
-
 pub type TaskSender = mpsc::UnboundedSender<Message>;
 pub type TaskReceiver = Arc<Mutex<mpsc::UnboundedReceiver<Message>>>;
-
 pub type EventSender = broadcast::Sender<Event>;
 pub type EventReceiver = broadcast::Receiver<Event>;
+
+use vk_method::Method;
+use crate::Result;
+
+use serde_json::value::Value;
+
+use std::iter::ExactSizeIterator;
+use std::sync::Arc;
+
+use tokio::sync::{broadcast, mpsc, oneshot, Mutex};
 
 pub struct InstancePool {
     sender: TaskSender,
