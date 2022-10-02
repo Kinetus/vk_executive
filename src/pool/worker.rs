@@ -58,7 +58,7 @@ impl Worker {
                             } else {
                                 methods.push(method);
                                 senders.push(sender);
-                                
+
                                 Worker::handle_execute(methods, senders, &instance);
                             };
                         },
@@ -69,6 +69,7 @@ impl Worker {
                     }
                 }
 
+                drop(receiver);
                 sleep(instance.time_between_requests).await;
             }
         });
