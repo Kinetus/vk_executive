@@ -69,6 +69,7 @@ impl Worker {
                     }
                 }
 
+                //important! Unlock mutex before sleep
                 drop(receiver);
                 sleep(instance.time_between_requests).await;
             }
