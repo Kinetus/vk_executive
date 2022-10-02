@@ -44,7 +44,7 @@ impl Worker {
                                             methods.push(method);
                                             senders.push(sender)
                                         }
-                                        Message::Terminate => break,
+                                        Message::Terminate => break 'thread_loop,
                                     },
                                     Err(reason) => match reason {
                                         mpsc::error::TryRecvError::Empty => break 'method_collection,
@@ -62,7 +62,7 @@ impl Worker {
                                 Worker::handle_execute(methods, senders, &instance);
                             };
                         },
-                        Message::Terminate => break 'thread_loop
+                        Message::Terminate => break,
                     },
                     None => {
                         break;
