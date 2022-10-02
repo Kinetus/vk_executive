@@ -1,0 +1,70 @@
+[
+    {
+        "id": 1,
+        "first_name": "Pavel",
+        "last_name": "Durov",
+        "is_closed": false,
+        "can_access_closed": true
+    },
+    {
+        "id": 2,
+        "first_name": "Alexandra",
+        "last_name": "Vladimirova",
+        "is_closed": true,
+        "can_access_closed": false
+    },
+    {
+        "id": 3,
+        "first_name": "DELETED",
+        "last_name": "",
+        "deactivated": "deleted"
+    },
+    {
+        "id": 4,
+        "first_name": "DELETED",
+        "last_name": "",
+        "deactivated": "deleted"
+    },
+    {
+        "id": 5,
+        "first_name": "Ilya",
+        "last_name": "Perekopsky",
+        "is_closed": false,
+        "can_access_closed": true
+    },
+    {
+        "id": 6,
+        "first_name": "Nikolay",
+        "last_name": "Durov",
+        "is_closed": false,
+        "can_access_closed": true
+    },
+    {
+        "id": 7,
+        "first_name": "Alexey",
+        "last_name": "Kobylyansky",
+        "is_closed": true,
+        "can_access_closed": false
+    },
+    {
+        "id": 8,
+        "first_name": "Aki",
+        "last_name": "Sepiashvili",
+        "is_closed": false,
+        "can_access_closed": true
+    },
+    {
+        "id": 9,
+        "first_name": "Nastya",
+        "last_name": "Vasilyeva",
+        "is_closed": true,
+        "can_access_closed": false
+    },
+    {
+        "id": 10,
+        "first_name": "Alexander",
+        "last_name": "Kuznetsov",
+        "is_closed": true,
+        "can_access_closed": false
+    }
+]

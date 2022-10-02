@@ -82,7 +82,7 @@ impl InstancePool {
         };
 
         self.event_sender.send(Event::GotWork).unwrap();
-        //tokio broadcast so slow and need delay
+        tokio::time::sleep(std::time::Duration::from_nanos(2)).await; //tokio broadcast so slow and need sleep
 
         oneshot_receiver.await.unwrap()
     }

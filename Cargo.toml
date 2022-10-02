@@ -34,3 +34,6 @@ comma_serde_urlencoded = "0.8.1"
 
 thisvk = { version = "0.2", optional = true }
 async-trait = { version = "0.1", optional = true }
+
+[dev-dependencies]
+lazy_static = "1.4"
