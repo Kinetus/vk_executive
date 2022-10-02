@@ -1,7 +1,8 @@
 use crate::{Error, VkError, VkResult};
 
-use super::{Event, EventSender, Instance, Message, Method, Sender, TaskReceiver};
+use super::{Instance, Message, Method, Sender, TaskReceiver, MAX_METHODS_IN_EXECUTE};
 
+use tokio::sync::mpsc;
 use vk_execute_compiler::ExecuteCompiler;
 
 use serde::Serialize;
@@ -22,31 +23,55 @@ impl Worker {
     pub fn new(
         id: usize,
         instance: Instance,
-        receiver: TaskReceiver,
-        event_sender: EventSender,
+        receiver: TaskReceiver
     ) -> Worker {
         let thread = tokio::spawn(async move {
-            loop {
-                match receiver.lock().await.recv().await {
+            'thread_loop: loop {
+                let mut receiver = receiver.lock().await;
+
+                match receiver.recv().await {
                     Some(message) => match message {
                         Message::NewMethod(method, sender) => {
-                            Worker::handle_method(method, sender, &instance)
-                        }
-                        Message::NewExecute(methods, senders) => {
-                            Worker::handle_execute(methods, senders, &instance)
-                        }
-                        Message::Terminate => {
-                            break;
-                        }
-                    },
+                            
+                            let mut methods: Vec<Method> = Vec::new();
+                            let mut senders: Vec<Sender> = Vec::new();
 
+                            //because first has already been received
+                            'method_collection: for _ in 0..MAX_METHODS_IN_EXECUTE - 1 {
+                                match receiver.try_recv() {
+                                    Ok(message) => match message {
+                                        Message::NewMethod(method, sender) => {
+                                            methods.push(method);
+                                            senders.push(sender)
+                                        }
+                                        Message::Terminate => break,
+                                    },
+                                    Err(reason) => match reason {
+                                        mpsc::error::TryRecvError::Empty => break 'method_collection,
+                                        mpsc::error::TryRecvError::Disconnected => break 'thread_loop,
+                                    }
+                                }
+                            }
+
+                            if methods.len() == 0 {
+                                Worker::handle_method(method, sender, &instance);
+                            } else {
+                                methods.push(method);
+                                senders.push(sender);
+
+                                Worker::handle_execute(methods, senders, &instance);
+                            };
+                        },
+                        Message::Terminate => break 'thread_loop
+                    },
                     None => {
                         break;
                     }
                 }
 
+                //important! Unlock mutex before sleep
+                drop(receiver);
                 sleep(instance.time_between_requests).await;
-                event_sender.send(Event::DoneWork).unwrap();
             }
         });
 

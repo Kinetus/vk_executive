@@ -1,22 +1,14 @@
 pub mod instance;
-mod event;
 mod message;
-mod execute_manager;
 mod worker;
-mod task_observer;
 
 pub use instance::Instance;
-pub use event::Event;
 use message::Message;
-use execute_manager::ExecuteManager;
 use worker::Worker;
-use task_observer::TaskObserver;
 
 pub type Sender = oneshot::Sender<Result<Value>>;
 pub type TaskSender = mpsc::UnboundedSender<Message>;
 pub type TaskReceiver = Arc<Mutex<mpsc::UnboundedReceiver<Message>>>;
-pub type EventSender = broadcast::Sender<Event>;
-pub type EventReceiver = broadcast::Receiver<Event>;
 
 use vk_method::Method;
 use crate::Result;
@@ -26,15 +18,14 @@ use serde_json::value::Value;
 use std::iter::ExactSizeIterator;
 use std::sync::Arc;
 
-use tokio::sync::{broadcast, mpsc, oneshot, Mutex};
+use tokio::sync::{mpsc, oneshot, Mutex};
 use core::future::Future;
+
+pub const MAX_METHODS_IN_EXECUTE: u8 = 25;
 
 pub struct InstancePool {
     sender: TaskSender,
     workers: Vec<Worker>,
-    execute_manager: ExecuteManager,
-    task_observer: TaskObserver,
-    event_sender: EventSender,
 }
 
 impl InstancePool {
@@ -49,43 +40,27 @@ impl InstancePool {
         let (sender, receiver) = mpsc::unbounded_channel();
         let receiver = Arc::new(Mutex::new(receiver));
 
-        let (event_sender, event_receiver) = broadcast::channel(20000);
-
         for (index, instance) in instances.into_iter().enumerate() {
             workers.push(Worker::new(
                 index,
                 instance,
-                receiver.clone(),
-                event_sender.clone(),
+                receiver.clone()
             ));
         }
 
         InstancePool {
             workers,
-            execute_manager: ExecuteManager::new(event_sender.subscribe(), sender.clone()),
-            task_observer: TaskObserver::new(event_receiver),
-            sender,
-            event_sender
+            sender
         }
     }
 
     pub fn run(&self, method: Method) -> impl Future<Output = Result<Value>> + '_ {
         let (oneshot_sender, oneshot_receiver) = oneshot::channel();
 
-        let running_tasks = futures::executor::block_on(self.task_observer.running_tasks());
-        self.event_sender.send(Event::GotWork).unwrap();
-        std::thread::sleep(std::time::Duration::from_micros(100)); //tokio broadcast so slow and need sleep
-
         async move {
-            if running_tasks < self.workers.len() {
-                self.sender
-                    .send(Message::NewMethod(method, oneshot_sender))
-                    .unwrap();
-            } else {
-                self.execute_manager
-                    .push(method, oneshot_sender)
-                    .unwrap();
-            };
+            self.sender
+                .send(Message::NewMethod(method, oneshot_sender))
+                .unwrap();
 
             oneshot_receiver.await.unwrap()
         }
