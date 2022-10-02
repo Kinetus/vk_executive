@@ -56,6 +56,9 @@ impl Worker {
                             if methods.len() == 0 {
                                 Worker::handle_method(method, sender, &instance);
                             } else {
+                                methods.push(method);
+                                senders.push(sender);
+                                
                                 Worker::handle_execute(methods, senders, &instance);
                             };
                         },
