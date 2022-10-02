@@ -1,4 +1,3 @@
-
 mod instance_builder;
 use instance_builder::{InstanceBuilder, BuildError};
 
