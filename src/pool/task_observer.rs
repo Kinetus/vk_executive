@@ -38,7 +38,7 @@ impl TaskObserver {
         }
     }
 
-    pub async fn running_task(&self) -> usize {
+    pub async fn running_tasks(&self) -> usize {
         // we can use unwrap safe because only drop function takes thread
         if self.thread.as_ref().unwrap().is_finished() {
             drop(&self);
@@ -81,7 +81,7 @@ mod tests {
         event_sender.send(Event::GotWork).unwrap();
         tokio::time::sleep(std::time::Duration::from_nanos(1)).await;
 
-        assert_eq!(worker_watcher.running_task().await, 2);
+        assert_eq!(worker_watcher.running_tasks().await, 2);
     }
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -97,7 +97,7 @@ mod tests {
         event_sender.send(Event::DoneWork).unwrap();
         tokio::time::sleep(std::time::Duration::from_nanos(1)).await;
 
-        assert_eq!(worker_watcher.running_task().await, 1);
+        assert_eq!(worker_watcher.running_tasks().await, 1);
     }
 
     #[tokio::test]
@@ -114,7 +114,7 @@ mod tests {
         event_sender.send(Event::DoneWork).unwrap();
         tokio::time::sleep(std::time::Duration::from_nanos(1)).await;
 
-        assert_eq!(worker_watcher.running_task().await, 0);
+        assert_eq!(worker_watcher.running_tasks().await, 0);
     }
 
     #[tokio::test]

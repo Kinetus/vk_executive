@@ -27,6 +27,7 @@ use std::iter::ExactSizeIterator;
 use std::sync::Arc;
 
 use tokio::sync::{broadcast, mpsc, oneshot, Mutex};
+use core::future::Future;
 
 pub struct InstancePool {
     sender: TaskSender,
@@ -68,23 +69,26 @@ impl InstancePool {
         }
     }
 
-    pub async fn run(&self, method: Method) -> Result<Value> {
+    pub fn run(&self, method: Method) -> impl Future<Output = Result<Value>> + '_ {
         let (oneshot_sender, oneshot_receiver) = oneshot::channel();
 
-        let running_tasks = self.task_observer.running_task().await;
-
-        if running_tasks < self.workers.len() {
-            self.sender
-                .send(Message::NewMethod(method, oneshot_sender))
-                .unwrap();
-        } else {
-            self.execute_manager.push(method, oneshot_sender)?;
-        };
-
+        let running_tasks = futures::executor::block_on(self.task_observer.running_tasks());
         self.event_sender.send(Event::GotWork).unwrap();
-        tokio::time::sleep(std::time::Duration::from_nanos(2)).await; //tokio broadcast so slow and need sleep
+        std::thread::sleep(std::time::Duration::from_micros(100)); //tokio broadcast so slow and need sleep
 
-        oneshot_receiver.await.unwrap()
+        async move {
+            if running_tasks < self.workers.len() {
+                self.sender
+                    .send(Message::NewMethod(method, oneshot_sender))
+                    .unwrap();
+            } else {
+                self.execute_manager
+                    .push(method, oneshot_sender)
+                    .unwrap();
+            };
+
+            oneshot_receiver.await.unwrap()
+        }
     }
 }
 
