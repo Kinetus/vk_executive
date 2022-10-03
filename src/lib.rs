@@ -3,7 +3,8 @@ pub use vk_error::VkError;
 pub(crate) use vk_error::VkResult;
 
 mod error;
-pub use error::{Error, Result};
+pub use error::Error;
+pub(crate) use error::Result;
 
 pub mod instance;
 pub use instance::Instance;
