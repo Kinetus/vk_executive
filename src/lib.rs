@@ -1,4 +1,4 @@
-//! Kernel for fast data collection from [VK](https://vk.com)
+//! Library for fast data collection from [VK](https://vk.com)
 //! 
 //! By default, it provides relatively low-level [`Client::send`]
 //! However, there is `thisvk` feature avaible.
