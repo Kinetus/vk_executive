@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::result::Result as StdResult;
 use thiserror::Error as ThisError;
 
-/// Use this only for parsing response from VK
+/// Struct only for parsing VK Result
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum VkResult<T> {
@@ -39,12 +39,13 @@ impl<T: std::fmt::Display> std::fmt::Display for VkResult<T> {
     }
 }
 
+/// Represents any valid VK Error
 #[derive(Debug, ThisError, Deserialize, Serialize, PartialEq, Eq, Clone)]
 pub struct VkError {
-    error_code: u16,
-    error_msg: String,
+    pub error_code: u16,
+    pub error_msg: String,
     #[serde(deserialize_with = "params_from_pairs")]
-    request_params: Option<HashMap<String, String>>,
+    pub request_params: Option<HashMap<String, String>>,
 }
 
 impl std::fmt::Display for VkError {
@@ -64,7 +65,17 @@ impl std::fmt::Display for VkError {
     }
 }
 
-fn params_from_pairs<'de, D>(d: D) -> StdResult<Option<HashMap<String, String>>, D::Error>
+/// Serializes [`HashMap`] from sequence of objects with fields key and value
+/// 
+/// For example, serializes this json
+/// ```javascript
+/// [
+///     { "key": "meaning_of_life", "value": 42 },
+///     { "key": "test", 1}
+/// ]
+/// ```
+/// into `HashMap { "meaning_of_life": 42, "test": 1 }`
+pub fn params_from_pairs<'de, D>(d: D) -> StdResult<Option<HashMap<String, String>>, D::Error>
 where
     D: Deserializer<'de>,
 {
@@ -83,6 +94,7 @@ where
     Ok(Some(map))
 }
 
+/// Represents any Request Param
 #[derive(Debug, Deserialize, Serialize)]
 struct Pair {
     key: String,

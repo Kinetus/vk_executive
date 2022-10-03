@@ -1,6 +1,6 @@
 use crate::{Error, VkError, VkResult};
 
-use super::{Instance, Message, Method, Sender, TaskReceiver, MAX_METHODS_IN_EXECUTE};
+use super::{Instance, Message, Method, ResultSender, TaskReceiver, MAX_METHODS_IN_EXECUTE};
 
 use tokio::sync::mpsc;
 use vk_execute_compiler::ExecuteCompiler;
@@ -12,6 +12,7 @@ use std::sync::Arc;
 use tokio::task::JoinHandle;
 use tokio::time::sleep;
 
+/// One method processing unit based on [`Instance`]
 pub struct Worker {
     #[allow(dead_code)]
     id: usize,
@@ -39,7 +40,7 @@ impl Worker {
                     Message::NewMethod(method, sender) => {
                         
                         let mut methods: Vec<Method> = Vec::new();
-                        let mut senders: Vec<Sender> = Vec::new();
+                        let mut senders: Vec<ResultSender> = Vec::new();
 
                         //because first has already been received
                         'method_collection: for _ in 0..MAX_METHODS_IN_EXECUTE - 1 {
@@ -80,10 +81,10 @@ impl Worker {
         }
     }
 
-    fn handle_method(method: Method, sender: Sender, instance: &Instance) {
+    fn handle_method(method: Method, sender: ResultSender, instance: &Instance) {
         let url = format!("{}/method/{}", &instance.api_url, method.name);
         let mut req = instance
-            .client
+            .http_client
             .post(url)
             .header("Content-Length", 0)
             // .query(&method.params)
@@ -98,7 +99,7 @@ impl Worker {
             method.params.serialize(serializer).unwrap();
         }
 
-        let req = instance.client.execute(req);
+        let req = instance.http_client.execute(req);
 
         tokio::spawn(async move {
             let response = req.await;
@@ -115,12 +116,12 @@ impl Worker {
         });
     }
 
-    fn handle_execute(methods: Vec<Method>, senders: Vec<Sender>, instance: &Instance) {
+    fn handle_execute(methods: Vec<Method>, senders: Vec<ResultSender>, instance: &Instance) {
         let execute = ExecuteCompiler::compile(methods);
 
         let url = format!("{}/method/execute", &instance.api_url);
         let req = instance
-            .client
+            .http_client
             .post(url)
             .header("Content-Length", 0)
             .query(&[("code", execute)])

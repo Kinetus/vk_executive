@@ -4,7 +4,7 @@ use vk_method::Method;
 use serde_json::Value;
 use dotenv::dotenv;
 use std::env;
-use fast_vk::{Instance, InstancePool};
+use fast_vk::{Instance, Client};
 use vk_method::{PairsArray, Params};
 
 use futures::future::join_all;
@@ -15,14 +15,14 @@ async fn ten_tasks_three_workers() {
     dotenv().unwrap();
     let instances = Instance::from_tokens(env::var("tokens").unwrap().split(",").take(3)).unwrap();
 
-    let pool = InstancePool::from_instances(instances);
+    let pool = Client::from_instances(instances);
 
     let mut vec = Vec::new();
 
     for i in 1..11 {
         let params = Params::try_from(PairsArray([("user_id", i)])).unwrap();
 
-        vec.push(pool.run(Method::new("users.get", params)));
+        vec.push(pool.send(Method::new("users.get", params)));
     }
 
     let responses = join_all(vec).await;
@@ -39,21 +39,17 @@ async fn one_thousand_tasks_ten_workers() {
     
     let instances = Instance::from_tokens(env::var("tokens").unwrap().split(",").take(10)).unwrap();
 
-    let pool = InstancePool::from_instances(instances);
+    let pool = Client::from_instances(instances);
 
     let mut vec = Vec::new();
 
     for i in 1..1001 {
         let params = Params::try_from(PairsArray([("user_id", i)])).unwrap();
 
-        vec.push(pool.run(Method::new("users.get", params)));
+        vec.push(pool.send(Method::new("users.get", params)));
     }
 
     let _responses = join_all(vec).await;
-
-    // for res in responses {
-    //     println!("{:?}", res)
-    // }
 
     println!("done");
 }
@@ -62,14 +58,14 @@ async fn one_task_one_worker() {
     dotenv().unwrap();
 
     let instances = Instance::from_tokens(env::var("tokens").unwrap().split(",").take(1)).unwrap();
-    let pool = InstancePool::from_instances(instances);
+    let pool = Client::from_instances(instances);
 
     let mut params = Params::new();
     params.insert("user_id", 1);
 
-    let response = pool.run(Method::new(
+    let response = pool.send(Method::new(
         "users.get",
-        params.into(),
+        params
     )).await.unwrap();
 
     assert_eq!(
