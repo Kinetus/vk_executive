@@ -5,7 +5,7 @@ use crate::Instance;
 use message::Message;
 use worker::Worker;
 
-pub type Sender = oneshot::Sender<Result<Value>>;
+pub type ResultSender = oneshot::Sender<Result<Value>>;
 pub type TaskSender = mpsc::UnboundedSender<Message>;
 pub type TaskReceiver = Arc<Mutex<mpsc::UnboundedReceiver<Message>>>;
 

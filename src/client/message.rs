@@ -1,8 +1,8 @@
-use super::{Sender, Method};
+use super::{ResultSender, Method};
 
 /// Message that sends to [`Worker`]
 #[derive(Debug)]
 pub enum Message {
-    NewMethod(Method, Sender),
+    NewMethod(Method, ResultSender),
     Terminate,
 }
