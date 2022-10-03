@@ -65,7 +65,17 @@ impl std::fmt::Display for VkError {
     }
 }
 
-fn params_from_pairs<'de, D>(d: D) -> StdResult<Option<HashMap<String, String>>, D::Error>
+/// Serializes [`HashMap`] from sequence of objects with fields key and value
+/// 
+/// For example, serializes this json
+/// ```javascript
+/// [
+///     { "key": "meaning_of_life", "value": 42 },
+///     { "key": "test", 1}
+/// ]
+/// ```
+/// into `HashMap { "meaning_of_life": 42, "test": 1 }`
+pub fn params_from_pairs<'de, D>(d: D) -> StdResult<Option<HashMap<String, String>>, D::Error>
 where
     D: Deserializer<'de>,
 {

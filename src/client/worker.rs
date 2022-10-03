@@ -12,6 +12,7 @@ use std::sync::Arc;
 use tokio::task::JoinHandle;
 use tokio::time::sleep;
 
+/// One method processing unit based on [`Instance`]
 pub struct Worker {
     #[allow(dead_code)]
     id: usize,
@@ -83,7 +84,7 @@ impl Worker {
     fn handle_method(method: Method, sender: Sender, instance: &Instance) {
         let url = format!("{}/method/{}", &instance.api_url, method.name);
         let mut req = instance
-            .client
+            .http_client
             .post(url)
             .header("Content-Length", 0)
             // .query(&method.params)
@@ -98,7 +99,7 @@ impl Worker {
             method.params.serialize(serializer).unwrap();
         }
 
-        let req = instance.client.execute(req);
+        let req = instance.http_client.execute(req);
 
         tokio::spawn(async move {
             let response = req.await;
@@ -120,7 +121,7 @@ impl Worker {
 
         let url = format!("{}/method/execute", &instance.api_url);
         let req = instance
-            .client
+            .http_client
             .post(url)
             .header("Content-Length", 0)
             .query(&[("code", execute)])

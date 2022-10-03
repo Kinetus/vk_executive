@@ -1,12 +1,12 @@
 mod instance_builder;
-use instance_builder::{InstanceBuilder, BuildError};
+pub use instance_builder::{InstanceBuilder, BuildError};
 
 use std::time::Duration;
 
 #[derive(Debug)]
 pub struct Instance {
     pub token: String,
-    pub client: reqwest::Client,
+    pub http_client: reqwest::Client,
     pub api_url: String,
     pub api_version: String,
     pub time_between_requests: Duration,
@@ -22,14 +22,31 @@ impl PartialEq for Instance {
 }
 
 impl Instance {
+    /// Creates [`InstanceBuilder`]
     pub fn new() -> InstanceBuilder {
         InstanceBuilder::new()
     }
 
-    pub fn from_tokens<I, T>(tokens: I) -> Result<Vec<Instance>, BuildError>
+    /// Creates vector of `Instances` from any [`IntoIterator`] of tokens
+    /// 
+    /// Example: 
+    /// ```rust
+    /// use fast_vk::Instance;
+    /// 
+    /// let instances = Instance::from_tokens(["123456789", "1111"]).unwrap();
+    /// 
+    /// assert_eq!(
+    ///     instances,
+    ///     vec![
+    ///         Instance::new().token("123456789".to_string()).build().unwrap(),
+    ///         Instance::new().token("1111".to_string()).build().unwrap()
+    ///     ]
+    /// )
+    /// ```
+    pub fn from_tokens<Tokens, Token>(tokens: Tokens) -> Result<Vec<Instance>, BuildError>
     where 
-        I: Iterator<Item = T>,
-        T: ToString
+        Tokens: IntoIterator<Item = Token>,
+        Token: ToString
     {
         let mut instances = Vec::new();
 

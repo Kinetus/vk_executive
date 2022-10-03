@@ -7,7 +7,7 @@ use std::time::Duration;
 
 pub struct InstanceBuilder {
     pub token: Option<String>,
-    pub client: reqwest::Client,
+    pub http_client: reqwest::Client,
     pub api_url: String,
     pub api_version: String,
     pub time_between_requests: std::time::Duration,
@@ -23,6 +23,11 @@ impl InstanceBuilder {
         T: ToString
     {
         self.token = Some(token.to_string());
+        self
+    }
+
+    pub fn http_client(mut self, http_client: reqwest::Client) -> InstanceBuilder {
+        self.http_client = http_client;
         self
     }
 
@@ -46,7 +51,31 @@ impl InstanceBuilder {
         self.time_between_requests = time_between_requests;
         self
     }
-
+    
+    /// Builds an [`Instance`]
+    /// 
+    /// Example:
+    /// ```rust
+    /// use reqwest::Client;
+    /// use std::time::Duration;
+    /// use fast_vk::instance;
+    /// 
+    /// let instance = instance::InstanceBuilder::new()
+    ///     .token(String::from("123456789"))
+    ///     .build()
+    ///     .unwrap();
+    /// 
+    /// assert_eq!(
+    ///     instance,
+    ///     instance::Instance {
+    ///         token: String::from("123456789"),
+    ///         client: Client::new(),
+    ///         api_url: String::from("https://api.vk.com/"),
+    ///         api_version: String::from("5.103"),
+    ///         time_between_requests: Duration::from_millis(334)
+    ///     }
+    /// );
+    /// ```
     pub fn build(self) -> Result<Instance, BuildError> {
         let token = match self.token {
             Some(token) => token,
@@ -55,7 +84,7 @@ impl InstanceBuilder {
 
         Ok(Instance {
             token,
-            client: self.client,
+            http_client: self.http_client,
             api_url: self.api_url,
             api_version: self.api_version,
             time_between_requests: self.time_between_requests,
@@ -67,7 +96,7 @@ impl Default for InstanceBuilder {
     fn default() -> Self {
         InstanceBuilder {
             token: None,
-            client: reqwest::Client::new(),
+            http_client: reqwest::Client::new(),
             api_url: String::from("https://api.vk.com/"),
             api_version: String::from("5.103"),
             time_between_requests: Duration::from_millis(334),
@@ -103,7 +132,7 @@ mod tests {
             instance,
             Instance {
                 token: String::from("token"),
-                client: Client::new(),
+                http_client: Client::new(),
                 api_url: String::from("https://example.com/"),
                 api_version: String::from("5.103"),
                 time_between_requests: Duration::from_millis(334)
@@ -117,6 +146,7 @@ mod tests {
             .api_url("https://api.vk.ru/")
             .api_version("5.143")
             .token(String::from("123456789"))
+            .http_client(Client::new())
             .time_between_requests(Duration::from_millis(500))
             .build()
             .unwrap();
@@ -125,10 +155,29 @@ mod tests {
             instance,
             Instance {
                 token: String::from("123456789"),
-                client: Client::new(),
+                http_client: Client::new(),
                 api_url: String::from("https://api.vk.ru/"),
                 api_version: String::from("5.143"),
                 time_between_requests: Duration::from_millis(500)
+            }
+        );
+    }
+
+    #[test]
+    fn custom_token() {
+        let instance = InstanceBuilder::new()
+            .token(String::from("123456789"))
+            .build()
+            .unwrap();
+     
+        assert_eq!(
+            instance,
+            Instance {
+                token: String::from("123456789"),
+                http_client: Client::new(),
+                api_url: String::from("https://api.vk.com/"),
+                api_version: String::from("5.103"),
+                time_between_requests: Duration::from_millis(334)
             }
         );
     }
