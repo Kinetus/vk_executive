@@ -25,7 +25,7 @@ async fn main() {
 
     let response = pool.run(Method::new(
         "users.get",
-        params.into(),
+        params,
     )).await.unwrap();
 
     assert_eq!(
