@@ -25,57 +25,59 @@ impl Worker {
         instance: Instance,
         receiver: TaskReceiver
     ) -> Worker {
-        let thread = tokio::spawn(async move {
-            'thread_loop: loop {
-                let mut receiver = receiver.lock().await;
-
-                match receiver.recv().await {
-                    Some(message) => match message {
-                        Message::NewMethod(method, sender) => {
-                            
-                            let mut methods: Vec<Method> = Vec::new();
-                            let mut senders: Vec<Sender> = Vec::new();
-
-                            //because first has already been received
-                            'method_collection: for _ in 0..MAX_METHODS_IN_EXECUTE - 1 {
-                                match receiver.try_recv() {
-                                    Ok(message) => match message {
-                                        Message::NewMethod(method, sender) => {
-                                            methods.push(method);
-                                            senders.push(sender)
-                                        }
-                                        Message::Terminate => break 'thread_loop,
-                                    },
-                                    Err(reason) => match reason {
-                                        mpsc::error::TryRecvError::Empty => break 'method_collection,
-                                        mpsc::error::TryRecvError::Disconnected => break 'thread_loop,
-                                    }
-                                }
-                            }
-
-                            if methods.len() == 0 {
-                                Worker::handle_method(method, sender, &instance);
-                            } else {
-                                methods.push(method);
-                                senders.push(sender);
-
-                                Worker::handle_execute(methods, senders, &instance);
-                            };
-                        },
-                        Message::Terminate => break,
-                    },
-                    None => {
-                        break;
-                    }
-                }
-
-                //important! Unlock mutex before sleep
-                drop(receiver);
-                sleep(instance.time_between_requests).await;
-            }
-        });
+        let thread = tokio::spawn(Worker::thread_loop(instance, receiver));
 
         Worker { thread, id }
+    }
+
+    async fn thread_loop(instance: Instance, receiver: TaskReceiver) {
+        'thread_loop: loop {
+            let mut receiver = receiver.lock().await;
+
+            match receiver.recv().await {
+                Some(message) => match message {
+                    Message::NewMethod(method, sender) => {
+                        
+                        let mut methods: Vec<Method> = Vec::new();
+                        let mut senders: Vec<Sender> = Vec::new();
+
+                        //because first has already been received
+                        'method_collection: for _ in 0..MAX_METHODS_IN_EXECUTE - 1 {
+                            match receiver.try_recv() {
+                                Ok(message) => match message {
+                                    Message::NewMethod(method, sender) => {
+                                        methods.push(method);
+                                        senders.push(sender)
+                                    }
+                                    Message::Terminate => break 'thread_loop,
+                                },
+                                Err(reason) => match reason {
+                                    mpsc::error::TryRecvError::Empty => break 'method_collection,
+                                    mpsc::error::TryRecvError::Disconnected => break 'thread_loop,
+                                }
+                            }
+                        }
+
+                        if methods.len() == 0 {
+                            Worker::handle_method(method, sender, &instance);
+                        } else {
+                            methods.push(method);
+                            senders.push(sender);
+
+                            Worker::handle_execute(methods, senders, &instance);
+                        };
+                    },
+                    Message::Terminate => break,
+                },
+                None => {
+                    break;
+                }
+            }
+
+            //important! Unlock mutex before sleep
+            drop(receiver);
+            sleep(instance.time_between_requests).await;
+        }
     }
 
     fn handle_method(method: Method, sender: Sender, instance: &Instance) {
