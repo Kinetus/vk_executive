@@ -42,10 +42,10 @@ impl<T: std::fmt::Display> std::fmt::Display for VkResult<T> {
 /// Represents any valid VK Error
 #[derive(Debug, ThisError, Deserialize, Serialize, PartialEq, Eq, Clone)]
 pub struct VkError {
-    error_code: u16,
-    error_msg: String,
+    pub error_code: u16,
+    pub error_msg: String,
     #[serde(deserialize_with = "params_from_pairs")]
-    request_params: Option<HashMap<String, String>>,
+    pub request_params: Option<HashMap<String, String>>,
 }
 
 impl std::fmt::Display for VkError {
