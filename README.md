@@ -9,7 +9,7 @@ fast_vk = "0.5"
 
 # Example
 ```rust
-use fast_vk::{InstancePool, Instance};
+use fast_vk::{Client, Instance};
 use vk_method::{Method, Params};
 
 #[tokio::main]
@@ -17,12 +17,12 @@ async fn main() {
     let token = ["1234567890abcdef1234567890abcdef1234567890abcdef"];
     let instances = Instance::from_tokens(token).unwrap();
 
-    let pool = InstancePool::from_instances(instances);
+    let pool = Client::from_instances(instances);
 
     let mut params = Params::new();
     params.insert("user_id", 1);
 
-    let response = pool.run(Method::new(
+    let response = pool.send(Method::new(
         "users.get",
         params,
     )).await.unwrap();
