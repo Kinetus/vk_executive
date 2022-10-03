@@ -4,7 +4,7 @@ use vk_method::Method;
 use serde_json::Value;
 use dotenv::dotenv;
 use std::env;
-use fast_vk::{Instance, InstancePool};
+use fast_vk::{Instance, Client};
 use vk_method::{PairsArray, Params};
 
 use futures::future::join_all;
@@ -15,7 +15,7 @@ async fn ten_tasks_three_workers() {
     dotenv().unwrap();
     let instances = Instance::from_tokens(env::var("tokens").unwrap().split(",").take(3)).unwrap();
 
-    let pool = InstancePool::from_instances(instances);
+    let pool = Client::from_instances(instances);
 
     let mut vec = Vec::new();
 
@@ -39,7 +39,7 @@ async fn one_thousand_tasks_ten_workers() {
     
     let instances = Instance::from_tokens(env::var("tokens").unwrap().split(",").take(10)).unwrap();
 
-    let pool = InstancePool::from_instances(instances);
+    let pool = Client::from_instances(instances);
 
     let mut vec = Vec::new();
 
@@ -62,7 +62,7 @@ async fn one_task_one_worker() {
     dotenv().unwrap();
 
     let instances = Instance::from_tokens(env::var("tokens").unwrap().split(",").take(1)).unwrap();
-    let pool = InstancePool::from_instances(instances);
+    let pool = Client::from_instances(instances);
 
     let mut params = Params::new();
     params.insert("user_id", 1);

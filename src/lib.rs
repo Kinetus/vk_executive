@@ -5,7 +5,7 @@ pub(crate) use vk_error::VkResult;
 mod error;
 pub use error::{Error, Result};
 
-mod pool;
-pub use pool::{Instance, InstancePool};
+mod client;
+pub use client::{Instance, Client};
 
 pub use vk_method;

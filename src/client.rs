@@ -23,12 +23,13 @@ use core::future::Future;
 
 pub const MAX_METHODS_IN_EXECUTE: u8 = 25;
 
-pub struct InstancePool {
+/// An asynchronous `Client` to make Requests with.
+pub struct Client {
     sender: TaskSender,
     workers: Vec<Worker>,
 }
 
-impl InstancePool {
+impl Client {
     pub fn from_instances<Instances>(instances: Instances) -> Self
     where
         Instances: IntoIterator<Item = Instance>,
@@ -48,7 +49,7 @@ impl InstancePool {
             ));
         }
 
-        InstancePool {
+        Client {
             workers,
             sender
         }
@@ -67,7 +68,7 @@ impl InstancePool {
     }
 }
 
-impl Drop for InstancePool {
+impl Drop for Client {
     fn drop(&mut self) {
         for _ in &self.workers {
             self.sender.send(Message::Terminate).unwrap();
@@ -79,7 +80,7 @@ impl Drop for InstancePool {
 
 #[cfg(feature = "thisvk")]
 #[async_trait::async_trait]
-impl thisvk::API for InstancePool {
+impl thisvk::API for Client {
     type Error = crate::Error;
 
     async fn method<T>(&self, method: Method) -> Result<T>

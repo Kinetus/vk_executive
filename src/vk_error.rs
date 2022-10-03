@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::result::Result as StdResult;
 use thiserror::Error as ThisError;
 
-/// Use this only for parsing response from VK
+/// Struct only for parsing VK Result
 #[derive(Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum VkResult<T> {
@@ -39,6 +39,7 @@ impl<T: std::fmt::Display> std::fmt::Display for VkResult<T> {
     }
 }
 
+/// Represents any valid VK Error
 #[derive(Debug, ThisError, Deserialize, Serialize, PartialEq, Eq, Clone)]
 pub struct VkError {
     error_code: u16,
@@ -83,6 +84,7 @@ where
     Ok(Some(map))
 }
 
+/// Represents any Request Param
 #[derive(Debug, Deserialize, Serialize)]
 struct Pair {
     key: String,
