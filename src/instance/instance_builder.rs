@@ -5,6 +5,7 @@ use super::Instance;
 
 use std::time::Duration;
 
+#[derive(Debug)]
 pub struct InstanceBuilder {
     pub token: Option<String>,
     pub http_client: reqwest::Client,
@@ -13,11 +14,38 @@ pub struct InstanceBuilder {
     pub time_between_requests: std::time::Duration,
 }
 
+impl PartialEq for InstanceBuilder {
+    fn eq(&self, other: &Self) -> bool {
+        self.token == other.token &&
+        self.api_url == other.api_url &&
+        self.api_version == other.api_version &&
+        self.time_between_requests == other.time_between_requests
+    }
+}
+
 impl InstanceBuilder {
+    /// Constructs new `InstanceBuilder`
     pub fn new() -> InstanceBuilder {
         InstanceBuilder::default()
     }
 
+    /// Sets token. It's required field.
+    /// 
+    /// # Example:
+    /// ```rust
+    /// use fast_vk::instance;
+    /// 
+    /// let instance = instance::InstanceBuilder::new()
+    ///     .token(String::from("12345"));
+    /// 
+    /// assert_eq!(
+    ///     instance,
+    ///     instance::InstanceBuilder {
+    ///         token: Some(String::from("12345")),
+    ///         ..instance::InstanceBuilder::default()
+    ///     }
+    /// );
+    /// ```
     pub fn token<T>(mut self, token: T) -> InstanceBuilder
     where 
         T: ToString
@@ -26,11 +54,46 @@ impl InstanceBuilder {
         self
     }
 
+    /// Sets http client
+    /// 
+    /// # Example:
+    /// ```rust
+    /// use reqwest::Client;
+    /// use fast_vk::instance;
+    /// 
+    /// let instance = instance::InstanceBuilder::new()
+    ///     .http_client(Client::new());
+    /// 
+    /// assert_eq!(
+    ///     instance,
+    ///     instance::InstanceBuilder {
+    ///         http_client: Client::new(),
+    ///         ..instance::InstanceBuilder::default()
+    ///     }
+    /// );
+    /// ```
     pub fn http_client(mut self, http_client: reqwest::Client) -> InstanceBuilder {
         self.http_client = http_client;
         self
     }
 
+    /// Sets server url
+    /// 
+    /// # Example:
+    /// ```rust
+    /// use fast_vk::instance;
+    /// 
+    /// let instance = instance::InstanceBuilder::new()
+    ///     .api_url(String::from("https:://vk.ru"));
+    /// 
+    /// assert_eq!(
+    ///     instance,
+    ///     instance::InstanceBuilder {
+    ///         api_url: String::from("https:://vk.ru"),
+    ///         ..instance::InstanceBuilder::default()
+    ///     }
+    /// );
+    /// ```
     pub fn api_url<T>(mut self, api_url: T) -> InstanceBuilder
     where 
         T: ToString
@@ -39,6 +102,23 @@ impl InstanceBuilder {
         self
     }
 
+    /// Sets an api version
+    /// 
+    /// # Example:
+    /// ```rust
+    /// use fast_vk::instance;
+    /// 
+    /// let instance = instance::InstanceBuilder::new()
+    ///     .api_version(String::from("5.144"));
+    /// 
+    /// assert_eq!(
+    ///     instance,
+    ///     instance::InstanceBuilder {
+    ///         api_version: String::from("5.144"),
+    ///         ..instance::InstanceBuilder::default()
+    ///     }
+    /// );
+    /// ```
     pub fn api_version<T>(mut self, api_version: T ) -> InstanceBuilder
     where 
         T: ToString
@@ -47,6 +127,24 @@ impl InstanceBuilder {
         self
     }
 
+    /// Sets time between http requests
+    /// 
+    /// # Example:
+    /// ```rust
+    /// use std::time::Duration;
+    /// use fast_vk::instance;
+    /// 
+    /// let instance = instance::InstanceBuilder::new()
+    ///     .time_between_requests(Duration::from_millis(300));
+    /// 
+    /// assert_eq!(
+    ///     instance,
+    ///     instance::InstanceBuilder {
+    ///         time_between_requests: Duration::from_millis(300),
+    ///         ..instance::InstanceBuilder::default()
+    ///     }
+    /// );
+    /// ```
     pub fn time_between_requests(mut self, time_between_requests: std::time::Duration) -> InstanceBuilder {
         self.time_between_requests = time_between_requests;
         self
@@ -54,7 +152,7 @@ impl InstanceBuilder {
     
     /// Builds an [`Instance`]
     /// 
-    /// Example:
+    /// # Example:
     /// ```rust
     /// use reqwest::Client;
     /// use std::time::Duration;
@@ -69,7 +167,7 @@ impl InstanceBuilder {
     ///     instance,
     ///     instance::Instance {
     ///         token: String::from("123456789"),
-    ///         client: Client::new(),
+    ///         http_client: Client::new(),
     ///         api_url: String::from("https://api.vk.com/"),
     ///         api_version: String::from("5.103"),
     ///         time_between_requests: Duration::from_millis(334)

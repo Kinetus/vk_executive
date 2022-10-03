@@ -22,12 +22,12 @@ impl PartialEq for Instance {
 }
 
 impl Instance {
-    /// Creates [`InstanceBuilder`]
+    /// Constructs [`InstanceBuilder`]
     pub fn new() -> InstanceBuilder {
         InstanceBuilder::new()
     }
 
-    /// Creates vector of `Instances` from any [`IntoIterator`] of tokens
+    /// Constructs vector of `Instances` from any [`IntoIterator`] of tokens
     /// 
     /// Example: 
     /// ```rust
