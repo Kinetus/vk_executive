@@ -12,7 +12,6 @@ fast_vk = "0.5"
 use fast_vk::{InstancePool, Instance};
 use std::collections::HashMap;
 use vk_method::Method;
-use serde_json::json;
 
 #[tokio::main]
 async fn main() {
