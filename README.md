@@ -10,8 +10,7 @@ fast_vk = "0.5"
 # Example
 ```rust
 use fast_vk::{InstancePool, Instance};
-use std::collections::HashMap;
-use vk_method::Method;
+use vk_method::{Method, Params};
 
 #[tokio::main]
 async fn main() {
