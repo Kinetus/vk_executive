@@ -65,7 +65,7 @@ async fn one_task_one_worker() {
 
     let response = pool.send(Method::new(
         "users.get",
-        params.into(),
+        params
     )).await.unwrap();
 
     assert_eq!(

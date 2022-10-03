@@ -2,7 +2,7 @@
 //! 
 //! By default, it provides relatively low-level [`Client::send`]
 //! However, there is `thisvk` feature avaible.
-//! With this feature you can call vk methods directly from [`Client`]. For details see [thisvk](https://github.com/Kinetus/thisvk).
+//! With this feature you can call vk methods directly from [`Client`]. For details see [thisvk](https://docs.rs/thisvk/0/thisvk/).
 
 mod vk_error;
 pub use vk_error::VkError;

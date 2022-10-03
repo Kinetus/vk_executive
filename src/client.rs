@@ -48,6 +48,43 @@ impl Client {
     }
 
     /// Asynchronously sends [`Method`]
+    /// 
+    /// # Example:
+    /// 
+    /// ```rust
+    /// use fast_vk::{Instance, Client};
+    /// use vk_method::{Method, Params};
+    /// #
+    /// # use std::env;
+    /// # use dotenv::dotenv;
+    /// # dotenv().unwrap();
+    /// #
+    /// # async fn main() {
+    /// # let instances = Instance::from_tokens(env::var("tokens").unwrap().split(",").take(1)).unwrap();
+    /// # let pool = Client::from_instances(instances);
+    /// 
+    /// let mut params = Params::new();
+    /// params.insert("user_id", 1);
+    ///
+    /// let response = pool.send(Method::new(
+    ///     "users.get",
+    ///     params
+    /// )).await.unwrap();
+    ///
+    /// assert_eq!(
+    ///     response,
+    ///     serde_json::json!([
+    ///         {
+    ///             "id": 1,
+    ///             "first_name": "Pavel",
+    ///             "last_name": "Durov",
+    ///             "is_closed": false,
+    ///             "can_access_closed": true
+    ///         }
+    ///     ])
+    /// );
+    /// # }
+    /// ```
     pub async fn send(&self, method: Method) -> Result<Value> {
         let (oneshot_sender, oneshot_receiver) = oneshot::channel();
 
