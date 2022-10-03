@@ -174,6 +174,9 @@ impl InstanceBuilder {
     ///     }
     /// );
     /// ```
+    /// 
+    /// # Errors
+    /// This method fails whenever token haven't passed 
     pub fn build(self) -> Result<Instance, BuildError> {
         let token = match self.token {
             Some(token) => token,

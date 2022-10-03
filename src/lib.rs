@@ -1,3 +1,9 @@
+//! Kernel for fast data collection from [VK](https://vk.com)
+//! 
+//! By default, it provides relatively low-level [`Client::send`]
+//! However, there is `thisvk` feature avaible.
+//! With this feature you can call vk methods directly from [`Client`]. For details see [thisvk](https://github.com/Kinetus/thisvk).
+
 mod vk_error;
 pub use vk_error::VkError;
 pub(crate) use vk_error::VkResult;
