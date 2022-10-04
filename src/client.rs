@@ -115,12 +115,9 @@ impl thisvk::API for Client {
     where
         for<'de> T: serde::Deserialize<'de>,
     {
-        match self.method(method).await {
-            Ok(value) => match serde_json::from_value(value) {
-                Ok(result) => Ok(result),
-                Err(error) => Err(crate::Error::Custom(error.into())),
-            },
-            Err(error) => Err(error),
+        match serde_json::from_value(self.method(method).await?) {
+            Ok(result) => Ok(result),
+            Err(error) => Err(crate::Error::Custom(error.into())),
         }
     }
 }
