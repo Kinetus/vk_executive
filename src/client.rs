@@ -66,7 +66,7 @@ impl Client {
     /// let mut params = Params::new();
     /// params.insert("user_id", 1);
     ///
-    /// let response = pool.send(Method::new(
+    /// let response = pool.method(Method::new(
     ///     "users.get",
     ///     params
     /// )).await.unwrap();
@@ -85,7 +85,7 @@ impl Client {
     /// );
     /// # }
     /// ```
-    pub async fn send(&self, method: Method) -> Result<Value> {
+    pub async fn method(&self, method: Method) -> Result<Value> {
         let (oneshot_sender, oneshot_receiver) = oneshot::channel();
 
         self.sender
@@ -115,7 +115,7 @@ impl thisvk::API for Client {
     where
         for<'de> T: serde::Deserialize<'de>,
     {
-        match self.send(method).await {
+        match self.method(method).await {
             Ok(value) => match serde_json::from_value(value) {
                 Ok(result) => Ok(result),
                 Err(error) => Err(crate::Error::Custom(error.into())),

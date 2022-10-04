@@ -22,7 +22,7 @@ async fn main() {
     let mut params = Params::new();
     params.insert("user_id", 1);
 
-    let response = pool.send(Method::new(
+    let response = pool.method(Method::new(
         "users.get",
         params,
     )).await.unwrap();

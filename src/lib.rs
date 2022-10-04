@@ -1,6 +1,6 @@
 //! Library for fast data collection from [VK](https://vk.com)
 //! 
-//! By default, it provides relatively low-level [`Client::send`]
+//! By default, it provides relatively low-level [`Client::method`]
 //! However, there is `thisvk` feature avaible.
 //! With this feature you can call vk methods directly from [`Client`]. For details see [thisvk](https://docs.rs/thisvk/0/thisvk/).
 

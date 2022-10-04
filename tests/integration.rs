@@ -22,7 +22,7 @@ async fn ten_tasks_three_workers() {
     for i in 1..11 {
         let params = Params::try_from(PairsArray([("user_id", i)])).unwrap();
 
-        vec.push(pool.send(Method::new("users.get", params)));
+        vec.push(pool.method(Method::new("users.get", params)));
     }
 
     let responses = join_all(vec).await;
@@ -46,7 +46,7 @@ async fn one_thousand_tasks_ten_workers() {
     for i in 1..1001 {
         let params = Params::try_from(PairsArray([("user_id", i)])).unwrap();
 
-        vec.push(pool.send(Method::new("users.get", params)));
+        vec.push(pool.method(Method::new("users.get", params)));
     }
 
     let _responses = join_all(vec).await;
@@ -63,7 +63,7 @@ async fn one_task_one_worker() {
     let mut params = Params::new();
     params.insert("user_id", 1);
 
-    let response = pool.send(Method::new(
+    let response = pool.method(Method::new(
         "users.get",
         params
     )).await.unwrap();
