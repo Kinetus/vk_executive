@@ -44,6 +44,7 @@ impl<T: std::fmt::Display> std::fmt::Display for VkResult<T> {
 pub struct VkError {
     pub error_code: u16,
     pub error_msg: String,
+    #[serde(default)]
     #[serde(deserialize_with = "params_from_pairs")]
     pub request_params: Option<HashMap<String, String>>,
 }
