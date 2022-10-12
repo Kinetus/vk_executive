@@ -59,7 +59,7 @@ impl Worker {
                             }
                         }
 
-                        if methods.len() == 0 {
+                        if methods.is_empty() {
                             Worker::handle_method(method, sender, &instance);
                         } else {
                             methods.push(method);

@@ -82,7 +82,7 @@ where
 {
     let s: Vec<Pair> = Deserialize::deserialize(d)?;
 
-    if s.len() == 0 {
+    if s.is_empty() {
         return Ok(None);
     }
 

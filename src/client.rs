@@ -102,7 +102,6 @@ impl Drop for Client {
             self.sender.send(Message::Terminate).unwrap();
         }
 
-        drop(&self.sender);
     }
 }
 
