@@ -5,7 +5,7 @@ edition = "2021"
 license = "MIT"
 authors = ["Eduard Baturin"]
 description = "Relatively low-level VK API library designed for millions requests per second"
-documentation = "https://docs.rs/fast_vk/0.5/fast_vk/"
+documentation = "https://docs.rs/fast_vk"
 repository = "https://github.com/kinetus/fast_vk"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
