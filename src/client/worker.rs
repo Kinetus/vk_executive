@@ -21,11 +21,7 @@ pub struct Worker {
 }
 
 impl Worker {
-    pub fn new(
-        id: usize,
-        instance: Instance,
-        receiver: TaskReceiver
-    ) -> Worker {
+    pub fn new(id: usize, instance: Instance, receiver: TaskReceiver) -> Worker {
         let thread = tokio::spawn(Worker::thread_loop(instance, receiver));
 
         Worker { thread, id }
@@ -38,7 +34,6 @@ impl Worker {
             match receiver.recv().await {
                 Some(message) => match message {
                     Message::NewMethod(method, sender) => {
-                        
                         let mut methods: Vec<Method> = Vec::new();
                         let mut senders: Vec<ResultSender> = Vec::new();
 
@@ -55,7 +50,7 @@ impl Worker {
                                 Err(reason) => match reason {
                                     mpsc::error::TryRecvError::Empty => break 'method_collection,
                                     mpsc::error::TryRecvError::Disconnected => break 'thread_loop,
-                                }
+                                },
                             }
                         }
 
@@ -67,7 +62,7 @@ impl Worker {
 
                             Worker::handle_execute(methods, senders, &instance);
                         };
-                    },
+                    }
                     Message::Terminate => break,
                 },
                 None => {
@@ -131,7 +126,18 @@ impl Worker {
 
         tokio::spawn(async move {
             let mut raw_response = match req.await {
-                Ok(response) => response.json().await.unwrap(),
+                Ok(response) => match response.json().await {
+                    Ok(result) => result,
+                    Err(error) => {
+                        let error = Arc::new(Error::Custom(error.into()));
+
+                        for sender in senders {
+                            sender.send(Err(Error::Arc(Arc::clone(&error)))).unwrap();
+                        }
+
+                        return;
+                    }
+                },
                 Err(error) => {
                     let error = Arc::new(Error::Custom(error.into()));
 
