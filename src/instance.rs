@@ -21,9 +21,20 @@ impl PartialEq for Instance {
     }
 }
 
+impl Default for Instance {
+    fn default() -> Self {
+        Instance::new()
+    }
+}
+
 impl Instance {
+    /// Constructs [`Instance`]
+    pub fn new() -> Instance {
+        Instance::builder().build().unwrap()
+    }
+
     /// Constructs [`InstanceBuilder`]
-    pub fn new() -> InstanceBuilder {
+    pub fn builder() -> InstanceBuilder {
         InstanceBuilder::new()
     }
 
