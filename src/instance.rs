@@ -49,8 +49,8 @@ impl Instance {
     /// assert_eq!(
     ///     instances,
     ///     vec![
-    ///         Instance::new().token("123456789".to_string()).build().unwrap(),
-    ///         Instance::new().token("1111".to_string()).build().unwrap()
+    ///         Instance::builder().token("123456789".to_string()).build().unwrap(),
+    ///         Instance::builder().token("1111".to_string()).build().unwrap()
     ///     ]
     /// )
     /// ```
