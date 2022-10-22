@@ -5,7 +5,7 @@ use super::Instance;
 
 use std::time::Duration;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct InstanceBuilder {
     pub token: Option<String>,
     pub http_client: reqwest::Client,

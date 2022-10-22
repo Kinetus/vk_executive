@@ -48,12 +48,20 @@ impl Instance {
         Tokens: IntoIterator<Item = Token>,
         Token: ToString
     {
+        Instance::from_tokens_by_prototype(tokens, InstanceBuilder::new())
+    }
+
+    pub fn from_tokens_by_prototype<Tokens, Token>(tokens: Tokens, prototype: InstanceBuilder) -> Result<Vec<Instance>, BuildError>
+    where 
+        Tokens: IntoIterator<Item = Token>,
+        Token: ToString
+    {
         let mut instances = Vec::new();
 
         for token in tokens {
-            instances.push(Instance::new().token(token.to_string()).build()?);
+            instances.push(prototype.clone().token(token).build()?);
         }
-        
         Ok(instances)
     }
 }
+
