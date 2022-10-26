@@ -82,7 +82,6 @@ impl Worker {
             .http_client
             .post(url)
             .header("Content-Length", 0)
-            // .query(&method.params)
             .query(&[("access_token", &instance.token)])
             .query(&[("v", &instance.api_version)])
             .build()

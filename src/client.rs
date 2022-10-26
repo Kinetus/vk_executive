@@ -48,9 +48,9 @@ impl Client {
     }
 
     /// Asynchronously sends [`Method`]
-    /// 
+    ///
     /// # Example:
-    /// 
+    ///
     /// ```rust
     /// use fast_vk::{Instance, Client};
     /// use vk_method::{Method, Params};
@@ -62,7 +62,7 @@ impl Client {
     /// # async fn main() {
     /// # let instances = Instance::from_tokens(env::var("tokens").unwrap().split(",").take(1)).unwrap();
     /// # let pool = Client::from_instances(instances);
-    /// 
+    ///
     /// let mut params = Params::new();
     /// params.insert("user_id", 1);
     ///
@@ -101,7 +101,6 @@ impl Drop for Client {
         for _ in &self.workers {
             self.sender.send(Message::Terminate).unwrap();
         }
-
     }
 }
 
@@ -114,9 +113,7 @@ impl thisvk::API for Client {
     where
         for<'de> T: serde::Deserialize<'de>,
     {
-        match serde_json::from_value(self.method(method).await?) {
-            Ok(result) => Ok(result),
-            Err(error) => Err(crate::Error::Custom(error.into())),
-        }
+        serde_json::from_value(self.method(method).await?)
+            .map_err(|error| crate::Error::Custom(error.into()))
     }
 }
