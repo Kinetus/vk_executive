@@ -12,6 +12,8 @@ pub enum Error {
     /// Represents [`Error`] inside Arc
     #[error("Arc({0})")]
     Arc(Arc<Error>),
+    #[error("Execute method is not allowed")]
+    Execute,
     /// Represents any Error
     #[error("Custom({0})")]
     Custom(anyhow::Error),

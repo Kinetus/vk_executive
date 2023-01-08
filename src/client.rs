@@ -9,7 +9,7 @@ pub type ResultSender = oneshot::Sender<Result<Value>>;
 pub type TaskSender = mpsc::UnboundedSender<Message>;
 pub type TaskReceiver = Arc<Mutex<mpsc::UnboundedReceiver<Message>>>;
 
-use crate::Result;
+use crate::{Result, Error};
 use vk_method::Method;
 
 use serde_json::value::Value;
@@ -86,6 +86,10 @@ impl Client {
     /// # }
     /// ```
     pub async fn method(&self, method: Method) -> Result<Value> {
+        if method.name.starts_with("execute") {
+            return Err(Error::Execute);
+        }
+
         let (oneshot_sender, oneshot_receiver) = oneshot::channel();
 
         self.sender
@@ -107,13 +111,13 @@ impl Drop for Client {
 #[cfg(feature = "thisvk")]
 #[async_trait::async_trait]
 impl thisvk::API for Client {
-    type Error = crate::Error;
+    type Error = Error;
 
     async fn method<T>(&self, method: Method) -> Result<T>
     where
         for<'de> T: serde::Deserialize<'de>,
     {
         serde_json::from_value(self.method(method).await?)
-            .map_err(|error| crate::Error::Custom(error.into()))
+            .map_err(|error| Error::Custom(error.into()))
     }
 }
