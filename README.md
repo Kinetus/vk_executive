@@ -8,6 +8,7 @@ fast_vk = "0.5"
 ```
 
 # Example
+
 ```rust
 use fast_vk::{Client, Instance};
 use vk_method::{Method, Params};
