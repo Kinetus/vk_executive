@@ -28,7 +28,7 @@ pub struct Client {
 }
 
 impl Client {
-    /// Builds `Client` from any type that can be converted into ExactSizeIterator over Instance
+    /// Builds `Client` from any type that can be converted into `ExactSizeIterator` over Instance
     pub fn from_instances<Instances>(instances: Instances) -> Self
     where
         Instances: IntoIterator<Item = Instance>,
@@ -44,7 +44,7 @@ impl Client {
             workers.push(Worker::new(index, instance, receiver.clone()));
         }
 
-        Client { workers, sender }
+        Self { sender, workers }
     }
 
     /// Asynchronously sends [`Method`]
@@ -85,11 +85,13 @@ impl Client {
     /// );
     /// # }
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// If the method name starts with `execute`, the function will panic.
+    /// `Client` itself creates execute requests, so you don't need to use it explicitly.
     pub async fn method(&self, method: Method) -> Result<Value> {
-        if method.name.starts_with("execute") {
-            return Err(Error::Execute);
-        }
-
+        assert!(!method.name.starts_with("execute"), "Execute method is not allowed");
         let (oneshot_sender, oneshot_receiver) = oneshot::channel();
 
         self.sender
