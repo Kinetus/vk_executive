@@ -12,20 +12,20 @@ pub enum VkResult<T> {
     Error(VkError),
 }
 
-impl<T> Into<Result<T, VkError>> for VkResult<T> {
-    fn into(self) -> StdResult<T, VkError> {
-        match self {
-            VkResult::Response(response) => StdResult::Ok(response),
-            VkResult::Error(error) => StdResult::Err(error),
+impl<T> From<VkResult<T>> for StdResult<T, VkError> {
+    fn from(value: VkResult<T>) -> Self {
+        match value {
+            VkResult::Response(response) => Ok(response),
+            VkResult::Error(error) => Err(error),
         }
     }
 }
 
-impl<T> Into<Result<T, Error>> for VkResult<T> {
-    fn into(self) -> StdResult<T, Error> {
-        match self {
-            VkResult::Response(response) => StdResult::Ok(response),
-            VkResult::Error(error) => StdResult::Err(Error::VK(error)),
+impl<T> From<VkResult<T>> for StdResult<T, Error> {
+    fn from(value: VkResult<T>) -> Self {
+        match value {
+            VkResult::Response(response) => Ok(response),
+            VkResult::Error(error) => Err(Error::VK(error)),
         }
     }
 }
@@ -33,8 +33,8 @@ impl<T> Into<Result<T, Error>> for VkResult<T> {
 impl<T: std::fmt::Display> std::fmt::Display for VkResult<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self {
-            VkResult::Response(t) => write!(f, "Response: {t}"),
-            VkResult::Error(error) => write!(f, "{error}"),
+            Self::Response(t) => write!(f, "Response: {t}"),
+            Self::Error(error) => write!(f, "{error}"),
         }
     }
 }
@@ -67,7 +67,7 @@ impl std::fmt::Display for VkError {
 }
 
 /// Serializes [`HashMap`] from sequence of objects with fields key and value
-/// 
+///
 /// For example, serializes this json
 /// ```javascript
 /// [
