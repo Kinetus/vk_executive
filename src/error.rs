@@ -17,6 +17,12 @@ pub enum Error {
     Custom(anyhow::Error),
 }
 
+impl From<VkError> for Error {
+    fn from(error: VkError) -> Self {
+        Self::VK(error)
+    }
+}
+
 impl From<anyhow::Error> for Error {
     fn from(error: anyhow::Error) -> Self {
         Self::Custom(error)

@@ -9,7 +9,7 @@ pub type ResultSender = oneshot::Sender<Result<Value>>;
 pub type TaskSender = mpsc::UnboundedSender<Message>;
 pub type TaskReceiver = Arc<Mutex<mpsc::UnboundedReceiver<Message>>>;
 
-use crate::{Result, Error};
+use crate::{Error, Result};
 use vk_method::Method;
 
 use serde_json::value::Value;
@@ -19,22 +19,32 @@ use std::sync::Arc;
 
 use tokio::sync::{mpsc, oneshot, Mutex};
 
+use http::request::Request;
+use hyper::body::Body;
+use tower::Service;
+
 pub const MAX_METHODS_IN_EXECUTE: u8 = 25;
 
 /// An asynchronous `Client` to make VK Requests with.
-pub struct Client {
+pub struct Client<C>
+where
+    C: Service<Request<Body>> + Send + 'static,
+{
     sender: TaskSender,
-    workers: Vec<Worker>,
+    workers: Vec<Worker<C>>,
 }
 
-impl Client {
+impl<C> Client<C>
+where
+    <C as Service<Request<Body>>>::Future: Send,
+    C: Service<Request<Body>, Response = http::Response<Body>> + Send + 'static,
+    <C as Service<Request<Body>>>::Error: std::error::Error + Send + Sync + 'static,
+{
     /// Builds `Client` from any type that can be converted into `ExactSizeIterator` over Instance
     pub fn from_instances<Instances>(instances: Instances) -> Self
     where
-        Instances: IntoIterator<Item = Instance>,
-        <Instances as IntoIterator>::IntoIter: ExactSizeIterator,
+        Instances: Iterator<Item = Instance<C>> + ExactSizeIterator,
     {
-        let instances = instances.into_iter();
         let mut workers = Vec::with_capacity(instances.len());
 
         let (sender, receiver) = mpsc::unbounded_channel();
@@ -91,7 +101,10 @@ impl Client {
     /// If the method name starts with `execute`, the function will panic.
     /// `Client` itself creates execute requests, so you don't need to use it explicitly.
     pub async fn method(&self, method: Method) -> Result<Value> {
-        assert!(!method.name.starts_with("execute"), "Execute method is not allowed");
+        assert!(
+            !method.name.starts_with("execute"),
+            "Execute method is not allowed"
+        );
         let (oneshot_sender, oneshot_receiver) = oneshot::channel();
 
         self.sender
@@ -102,7 +115,10 @@ impl Client {
     }
 }
 
-impl Drop for Client {
+impl<C> Drop for Client<C>
+where
+    C: Service<Request<Body>> + Send,
+{
     fn drop(&mut self) {
         for _ in &self.workers {
             self.sender.send(Message::Terminate).unwrap();
@@ -110,16 +126,19 @@ impl Drop for Client {
     }
 }
 
-#[cfg(feature = "thisvk")]
-#[async_trait::async_trait]
-impl thisvk::API for Client {
-    type Error = Error;
-
-    async fn method<T>(&self, method: Method) -> Result<T>
-    where
-        for<'de> T: serde::Deserialize<'de>,
-    {
-        serde_json::from_value(self.method(method).await?)
-            .map_err(|error| Error::Custom(error.into()))
-    }
-}
+// #[cfg(feature = "thisvk")]
+// #[async_trait::async_trait]
+// impl<C> thisvk::API for Client<C>
+// where
+//     C: Service<Request<Body>> + Send,
+// {
+//     type Error = Error;
+//
+//     async fn method<T>(&self, method: Method) -> Result<T>
+//     where
+//         for<'de> T: serde::Deserialize<'de>,
+//     {
+//         serde_json::from_value(self.method(method).await?)
+//             .map_err(|error| Error::Custom(error.into()))
+//     }
+// }

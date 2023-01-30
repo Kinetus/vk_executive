@@ -4,5 +4,4 @@ use super::{ResultSender, Method};
 #[derive(Debug)]
 pub enum Message {
     NewMethod(Method, ResultSender),
-    Terminate,
 }
