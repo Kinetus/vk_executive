@@ -13,9 +13,9 @@ use common::USERS;
 #[tokio::test(flavor = "multi_thread")]
 async fn ten_tasks_three_workers() {
     dotenv().unwrap();
-    let instances = Instance::from_tokens(env::var("tokens").unwrap().split(",").take(3)).unwrap();
+    let instances = Instance::from_tokens(env::var("TOKENS").unwrap().split('v').take(3)).unwrap();
 
-    let pool = Client::from_instances(instances);
+    let pool = Client::from_instances(instances.into_iter());
 
     let mut vec = Vec::new();
 
@@ -37,9 +37,9 @@ async fn ten_tasks_three_workers() {
 async fn one_thousand_tasks_ten_workers() {
     dotenv().unwrap();
     
-    let instances = Instance::from_tokens(env::var("tokens").unwrap().split(",").take(10)).unwrap();
+    let instances = Instance::from_tokens(env::var("TOKENS").unwrap().split('v').take(10)).unwrap();
 
-    let pool = Client::from_instances(instances);
+    let pool = Client::from_instances(instances.into_iter());
 
     let mut vec = Vec::new();
 
@@ -57,8 +57,8 @@ async fn one_thousand_tasks_ten_workers() {
 async fn one_task_one_worker() {
     dotenv().unwrap();
 
-    let instances = Instance::from_tokens(env::var("tokens").unwrap().split(",").take(1)).unwrap();
-    let pool = Client::from_instances(instances);
+    let instances = Instance::from_tokens(env::var("TOKENS").unwrap().split('v').take(1)).unwrap();
+    let pool = Client::from_instances(instances.into_iter());
 
     let mut params = Params::new();
     params.insert("user_id", 1);
@@ -79,5 +79,5 @@ async fn one_task_one_worker() {
                 "can_access_closed": true
             }
         ])
-    )
+    );
 }
