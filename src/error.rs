@@ -4,17 +4,21 @@ use std::sync::Arc;
 pub type Result<T> = std::result::Result<T, Error>;
 
 /// The Errors that may occur when processing a Method.
-#[derive(thiserror::Error, Debug)]
+#[derive(thiserror::Error, Debug, Clone)]
 pub enum Error {
-    /// Represents any VK Error
-    #[error("VK Error({0})")]
+    /// Represents any VK error
+    #[error("VK error({0})")]
     VK(VkError),
-    /// Represents [`Error`] inside Arc
-    #[error("Arc({0})")]
-    Arc(Arc<Error>),
-    /// Represents any Error
-    #[error("Custom({0})")]
-    Custom(anyhow::Error),
+    /// Represents any shared VK error
+    /// For example: [6] Too many requests
+    #[error("Shared VK error({0})")]
+    SharedVK(Arc<VkError>),
+    /// Represents any network error
+    #[error("Network error({0})")]
+    Network(Arc<hyper::Error>),
+    /// Represents any serialization error
+    #[error("Serializion error({0})")]
+    Serialization(Arc<serde_json::Error>),
 }
 
 impl From<VkError> for Error {
@@ -23,8 +27,20 @@ impl From<VkError> for Error {
     }
 }
 
-impl From<anyhow::Error> for Error {
-    fn from(error: anyhow::Error) -> Self {
-        Self::Custom(error)
+impl From<Arc<VkError>> for Error {
+    fn from(error: Arc<VkError>) -> Self {
+        Self::SharedVK(error) 
+    }
+}
+
+impl From<Arc<hyper::Error>> for Error {
+    fn from(error: Arc<hyper::Error>) -> Self {
+        Self::Network(error) 
+    }
+}
+
+impl From<Arc<serde_json::Error>> for Error {
+    fn from(error: Arc<serde_json::Error>) -> Self {
+        Self::Serialization(error)
     }
 }

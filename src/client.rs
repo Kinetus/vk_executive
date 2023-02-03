@@ -9,7 +9,7 @@ pub type ResultSender = oneshot::Sender<Result<Value>>;
 pub type TaskSender = mpsc::UnboundedSender<Message>;
 pub type TaskReceiver = Arc<Mutex<mpsc::UnboundedReceiver<Message>>>;
 
-use crate::{Error, Result};
+use crate::Result;
 use vk_method::Method;
 
 use serde_json::value::Value;
@@ -28,7 +28,7 @@ pub const MAX_METHODS_IN_EXECUTE: u8 = 25;
 /// An asynchronous `Client` to make VK Requests with.
 pub struct Client<C>
 where
-    C: Service<Request<Body>> + Send + 'static,
+    C: Service<Request<Body>> + Send + Sync + 'static,
 {
     sender: TaskSender,
     workers: Vec<Worker<C>>,
@@ -36,9 +36,11 @@ where
 
 impl<C> Client<C>
 where
+    C: Service<Request<Body>, Response = http::Response<Body>, Error = hyper::Error>
+        + Send
+        + Sync
+        + 'static,
     <C as Service<Request<Body>>>::Future: Send,
-    C: Service<Request<Body>, Response = http::Response<Body>> + Send + 'static,
-    <C as Service<Request<Body>>>::Error: std::error::Error + Send + Sync + 'static,
 {
     /// Builds `Client` from any type that can be converted into `ExactSizeIterator` over Instance
     pub fn from_instances<Instances>(instances: Instances) -> Self
@@ -112,17 +114,6 @@ where
             .unwrap();
 
         oneshot_receiver.await.unwrap()
-    }
-}
-
-impl<C> Drop for Client<C>
-where
-    C: Service<Request<Body>> + Send,
-{
-    fn drop(&mut self) {
-        for _ in &self.workers {
-            self.sender.send(Message::Terminate).unwrap();
-        }
     }
 }
 

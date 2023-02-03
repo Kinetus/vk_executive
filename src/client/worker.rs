@@ -1,11 +1,12 @@
-use crate::{Error, VkError, VkResult};
+use crate::{Result, VkError, VkResult};
+use std::result::Result as StdResult;
 
 use super::{Instance, Message, ResultSender, TaskReceiver, MAX_METHODS_IN_EXECUTE};
 
 use tokio::sync::mpsc;
 use vk_execute_compiler::ExecuteCompiler;
 
-use serde::{Serialize, Serializer};
+use serde::Serialize;
 use serde_json::value::Value;
 
 use std::marker::PhantomData;
@@ -35,13 +36,14 @@ where
 
 impl<C> Worker<C>
 where
-    C: Service<Request<Body>, Response = http::Response<Body>> + Send + 'static,
+    C: Service<Request<Body>, Response = http::Response<Body>, Error = hyper::Error>
+        + Send
+        + 'static,
     <C as Service<Request<Body>>>::Future: Send,
-    <C as Service<Request<Body>>>::Error: std::error::Error + Send + Sync + 'static,
 {
     pub fn new(id: usize, instance: Instance<C>, receiver: TaskReceiver) -> Self {
         let thread = tokio::spawn(async {
-            Self::thread_loop(instance, receiver);
+            Self::thread_loop(instance, receiver).await;
         });
 
         Self {
@@ -64,85 +66,52 @@ where
                             .ok()?;
 
                     if methods_with_senders.is_empty() {
-                        Self::process_method(&method, &sender, &mut instance);
+                        Self::process_method(&method, sender, &mut instance);
                     } else {
-                        // Self::process_execute()
-                        todo!()
+                        methods_with_senders.push((method, sender));
+                        Self::process_execute(methods_with_senders, &mut instance);
                     }
                 }
             }
 
-            // match receiver.recv().await {
-            //     Some(message) => match message {
-            //         Message::NewMethod(method, sender) => {
-            //             let mut methods: Vec<Method> = Vec::new();
-            //             let mut senders: Vec<ResultSender> = Vec::new();
-            //
-            //             //because first has already been received
-            //             'method_collection: for _ in 0..MAX_METHODS_IN_EXECUTE - 1 {
-            //                 match receiver.try_recv() {
-            //                     Ok(message) => match message {
-            //                         Message::NewMethod(method, sender) => {
-            //                             methods.push(method);
-            //                             senders.push(sender);
-            //                         }
-            //                         Message::Terminate => break 'thread_loop,
-            //                     },
-            //                     Err(reason) => match reason {
-            //                         mpsc::error::TryRecvError::Empty => break 'method_collection,
-            //                         mpsc::error::TryRecvError::Disconnected => break 'thread_loop,
-            //                     },
-            //                 }
-            //             }
-            //
-            //             if methods.is_empty() {
-            //                 let request = Self::prepare_request(&method, &mut instance);
-            //                 let request_future = instance.http_client.call(request);
-            //
-            //                 tokio::spawn(async {
-            //                     let value = Self::handle_request(request_future).await;
-            //                     sender.send(value.map_err(Into::into)).unwrap();
-            //                 });
-            //             } else {
-            //                 methods.push(method);
-            //                 senders.push(sender);
-            //
-            //                 Self::handle_execute(methods, senders, &instance);
-            //             };
-            //         }
-            //         Message::Terminate => break,
-            //     },
-            //     None => {
-            //         break;
-            //     }
-            // }
-            //
             //important! Unlock mutex before sleep
             drop(receiver);
             sleep(instance.time_between_requests).await;
         }
     }
 
-    fn process_method(method: &Method, sender: &ResultSender, instance: &mut Instance<C>) {
+    /// Complete single method process up to sending result
+    fn process_method(method: &Method, sender: ResultSender, instance: &mut Instance<C>) {
         let request = Self::prepare_request(method, instance);
         let request_future = instance.http_client.call(request);
 
         tokio::spawn(async {
-            let value = Self::handle_request(request_future).await;
-            sender.send(value.map_err(Into::into)).unwrap();
+            let result = Self::handle_method(request_future).await;
+            sender.send(result).unwrap();
         });
     }
 
+    async fn handle_method(request_future: <C as Service<Request<Body>>>::Future) -> Result<Value> {
+        let response = Self::handle_request(request_future).await?;
+
+        let result = <StdResult<Value, VkError>>::from(
+            serde_json::from_value::<VkResult<Value>>(response).map_err(Arc::new)?,
+        );
+
+        result.map_err(Into::into)
+    }
+
+    /// Takes methods from receiver until it becomes empty or reach `max`
     fn take_methods(
         receiver: &mut mpsc::UnboundedReceiver<Message>,
-        count: usize,
-    ) -> Result<Vec<(Method, ResultSender)>, mpsc::error::TryRecvError> {
+        max: usize,
+    ) -> StdResult<Vec<(Method, ResultSender)>, mpsc::error::TryRecvError> {
         let mut methods: Vec<(Method, ResultSender)> = Vec::new();
 
-        for i in 0..count {
+        for _ in 0..max {
             let message = receiver.try_recv();
 
-            if let Err(mpsc::error::TryRecvError::Empty) = message {
+            if matches!(message, Err(mpsc::error::TryRecvError::Empty)) {
                 break;
             }
 
@@ -170,37 +139,43 @@ where
             .unwrap()
     }
 
+    /// Makes request and tries to parse response to `Value`
+    ///
+    /// Note that this function don't handle parsed request in any way.
+    /// It just parses a json
     async fn handle_request(
-        request: <C as Service<Request<Body>>>::Future,
-    ) -> anyhow::Result<Value> {
-        let mut response = request.await?;
-        let value: Value = serde_json::from_slice(&to_bytes(response.body_mut()).await?)?;
+        request_future: <C as Service<Request<Body>>>::Future,
+    ) -> Result<Value> {
+        let mut response = request_future.await.map_err(Arc::new)?;
+        let value: Value =
+            serde_json::from_slice(&to_bytes(response.body_mut()).await.map_err(Arc::new)?)
+                .map_err(Arc::new)?;
 
         Ok(value)
     }
 
-    fn parse_execute(response: Value) -> Result<Vec<Result<Value, VkError>>, crate::Error> {
-        let mut execute_errors: Vec<VkError> = serde_json::from_value(
-            response
-                .as_object_mut()
-                .unwrap()
-                .remove("execute_error")
-                .unwrap_or_default(),
+    /// Parses execute from `serde_json::Value` to `Result<Vec<StdResult<Value, crate::VkError>>>`
+    /// where
+    ///     outer the result stands for possible shared error
+    ///     the inner result stands for possible owned vk error
+    fn parse_execute(mut response: Value) -> Result<Vec<StdResult<Value, crate::VkError>>> {
+        let mut execute_errors: Vec<VkError> = response
+            .as_object_mut()
+            .unwrap()
+            .remove("execute_error")
+            .map_or_else(Vec::new, |errors| serde_json::from_value(errors).unwrap());
+
+        let execute_response = <StdResult<Value, VkError>>::from(
+            serde_json::from_value::<VkResult<Value>>(response).map_err(Arc::new)?,
         )
-        .unwrap();
+        .map_err(Arc::new)?;
 
-        let execute_response: Result<Value, VkError> =
-            serde_json::from_value::<VkResult<Value>>(response)
-                .unwrap()
-                .into();
-
-        let responses: Vec<Value> =
-            serde_json::from_value(execute_response?).map_err(anyhow::Error::new)?;
+        let responses: Vec<Value> = serde_json::from_value(execute_response).map_err(Arc::new)?;
 
         let mut result = Vec::new();
 
         for response in responses {
-            if let Value::Bool(false) = response {
+            if response == Value::Bool(false) {
                 result.push(Err(execute_errors.remove(0)));
             } else {
                 result.push(Ok(response));
@@ -210,10 +185,27 @@ where
         Ok(result)
     }
 
-    async fn process_execute(
+    fn send_execute_results(
+        result: Result<Vec<StdResult<Value, crate::VkError>>>,
+        senders: Vec<ResultSender>,
+    ) {
+        if let Err(error) = result {
+            for sender in senders {
+                sender.send(Err(error.clone())).unwrap();
+            }
+            return;
+        };
+
+        for (sender, result) in senders.into_iter().zip(result.unwrap()) {
+            sender.send(result.map_err(Into::into)).unwrap();
+        }
+    }
+
+    /// Complete `execute` method process up to sending results
+    fn process_execute(
         methods_with_senders: Vec<(Method, ResultSender)>,
         instance: &mut Instance<C>,
-    ) -> Result<Vec<Result<Value, VkError>>, crate::Error> {
+    ) {
         let (methods, senders): (Vec<_>, Vec<_>) = methods_with_senders.into_iter().unzip();
         let execute = ExecuteCompiler::compile(methods);
 
@@ -224,77 +216,21 @@ where
 
         let request = Self::prepare_request(&execute, instance);
 
-        // add tokio spawn
-        let requst_future = instance.http_client.call(request);
-        let mut response = Self::handle_request(requst_future).await?;
-        
-        let result = Self::parse_execute(response);
-        //     let mut raw_response = match req.await {
-        //         Ok(response) => match response.json().await {
-        //             Ok(result) => result,
-        //             Err(error) => {
-        //                 let error = Arc::new(Error::Custom(error.into()));
-        //
-        //                 for sender in senders {
-        //                     sender.send(Err(Error::Arc(Arc::clone(&error)))).unwrap();
-        //                 }
-        //
-        //                 return;
-        //             }
-        //         },
-        //         Err(error) => {
-        //             let error = Arc::new(Error::Custom(error.into()));
-        //
-        //             for sender in senders {
-        //                 sender.send(Err(Error::Arc(Arc::clone(&error)))).unwrap();
-        //             }
-        //
-        //             return;
-        //         }
-        //     };
-        //
-        //     let execute_errors_raw = if let Value::Object(ref mut map) = raw_response {
-        //         map.remove("execute_errors")
-        //     } else {
-        //         None
-        //     };
-        //
-        //     let mut execute_errors: Vec<VkError> = Vec::new();
-        //
-        //     if let Some(execute_errors_value) = execute_errors_raw {
-        //         execute_errors = serde_json::from_value(execute_errors_value).unwrap();
-        //     }
-        //
-        //     let response: Result<Value, VkError> =
-        //         serde_json::from_value::<VkResult<Value>>(raw_response)
-        //         .unwrap()
-        //         .into();
-        //
-        // match response {
-        //     Ok(responses) => {
-        //         let responses: Vec<Value> = serde_json::from_value(responses).unwrap();
-        //
-        //         for (sender, response) in senders.into_iter().zip(responses.into_iter()) {
-        //             if let Some(bool) = response.as_bool() {
-        //                 if bool == false {
-        //                     sender
-        //                         .send(Err(Error::VK(execute_errors.remove(0))))
-        //                         .unwrap();
-        //                 }
-        //             } else {
-        //                 sender.send(Ok(response)).unwrap();
-        //             }
-        //         }
-        //     }
-        //     Err(error) => {
-        //         let error = Arc::new(Error::VK(error));
-        //
-        //             for sender in senders {
-        //                 sender.send(Err(Error::Arc(Arc::clone(&error)))).unwrap();
-        //             }
-        //         }
-        //     }
-        // });
+        let request_future = instance.http_client.call(request);
+
+        tokio::spawn(async {
+            let result = Self::handle_execute(request_future).await;
+            Self::send_execute_results(result, senders);
+        });
+    }
+
+    /// Makes request and parses a response
+    async fn handle_execute(
+        request_future: <C as Service<Request<Body>>>::Future,
+    ) -> Result<Vec<StdResult<Value, crate::VkError>>> {
+        let response = Self::handle_request(request_future).await?;
+
+        Self::parse_execute(response)
     }
 }
 

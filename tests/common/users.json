@@ -17,13 +17,18 @@
         "id": 3,
         "first_name": "DELETED",
         "last_name": "",
-        "deactivated": "deleted"
+        "deactivated": "deleted",
+        "is_closed": false,
+        "can_access_closed": true
+
     },
     {
         "id": 4,
         "first_name": "DELETED",
         "last_name": "",
-        "deactivated": "deleted"
+        "deactivated": "deleted",
+        "is_closed": false,
+        "can_access_closed": true
     },
     {
         "id": 5,
