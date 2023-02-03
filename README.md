@@ -4,7 +4,7 @@ Library for fast data collection from [VK](https://vk.com)
 
 ```toml
 [dependencies]
-vk_executive = "0.6"
+vk_executive = "0.7"
 ```
 
 # Example
