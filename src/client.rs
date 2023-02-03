@@ -73,7 +73,7 @@ where
     /// #
     /// # async fn main() {
     /// # let instances = Instance::from_tokens(env::var("tokens").unwrap().split(",").take(1)).unwrap();
-    /// # let pool = Client::from_instances(instances);
+    /// # let pool = Client::from_instances(instances.into_iter());
     ///
     /// let mut params = Params::new();
     /// params.insert("user_id", 1);

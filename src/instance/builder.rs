@@ -7,8 +7,8 @@ use super::Instance;
 use std::time::Duration;
 
 use http::request::Request;
-use tower::Service;
 use hyper::body::Body;
+use tower::Service;
 
 use super::HyperClient;
 
@@ -29,10 +29,10 @@ where
     C: Service<Request<Body>>,
 {
     fn eq(&self, other: &Self) -> bool {
-        self.token == other.token &&
-        self.api_url == other.api_url &&
-        self.api_version == other.api_version &&
-        self.time_between_requests == other.time_between_requests
+        self.token == other.token
+            && self.api_url == other.api_url
+            && self.api_version == other.api_version
+            && self.time_between_requests == other.time_between_requests
     }
 }
 
@@ -53,7 +53,7 @@ where
 }
 
 impl Builder<HyperClient> {
-    /// Constructs new `InstanceBuilder`
+    /// Constructs new `Builder`
     #[must_use]
     pub fn new() -> Self {
         Self::default()
@@ -77,45 +77,46 @@ where
     C: Service<Request<Body>>,
 {
     /// Sets token. It's required field.
-    /// 
+    ///
     /// # Example:
     /// ```rust
     /// use fast_vk::instance;
-    /// 
-    /// let instance = instance::InstanceBuilder::new()
+    ///
+    /// let instance = instance::Builder::new()
     ///     .token(String::from("12345"));
-    /// 
+    ///
     /// assert_eq!(
     ///     instance,
-    ///     instance::InstanceBuilder {
+    ///     instance::Builder {
     ///         token: Some(String::from("12345")),
-    ///         ..instance::InstanceBuilder::default()
+    ///         ..instance::Builder::default()
     ///     }
     /// );
     /// ```
     pub fn token<T>(mut self, token: T) -> Self
-    where 
-        T: ToString
+    where
+        T: ToString,
     {
         self.token = Some(token.to_string());
         self
     }
 
     /// Sets http client
-    /// 
+    ///
     /// # Example:
     /// ```rust
-    /// use HyperClient;
+    /// use hyper::client::Client;
+    /// use hyper_tls::HttpsConnector;
     /// use fast_vk::instance;
-    /// 
-    /// let instance = instance::InstanceBuilder::new()
-    ///     .http_client(Client::new());
-    /// 
+    ///
+    /// let instance = instance::Builder::new()
+    ///     .http_client(Client::builder().build(HttpsConnector::new()));
+    ///
     /// assert_eq!(
     ///     instance,
-    ///     instance::InstanceBuilder {
-    ///         http_client: Client::new(),
-    ///         ..instance::InstanceBuilder::default()
+    ///     instance::Builder {
+    ///         http_client: Client::builder().build(HttpsConnector::new()),
+    ///         ..instance::Builder::default()
     ///     }
     /// );
     /// ```
@@ -125,105 +126,103 @@ where
     }
 
     /// Sets server url
-    /// 
+    ///
     /// # Example:
     /// ```rust
     /// use fast_vk::instance;
-    /// 
-    /// let instance = instance::InstanceBuilder::new()
+    ///
+    /// let instance = instance::Builder::new()
     ///     .api_url(String::from("https:://vk.ru"));
-    /// 
+    ///
     /// assert_eq!(
     ///     instance,
-    ///     instance::InstanceBuilder {
+    ///     instance::Builder {
     ///         api_url: String::from("https:://vk.ru"),
-    ///         ..instance::InstanceBuilder::default()
+    ///         ..instance::Builder::default()
     ///     }
     /// );
     /// ```
-    pub fn api_url<T>(mut self, api_url: T) -> Self
-    where 
-        T: ToString
-    {
+    pub fn api_url(mut self, api_url: impl ToString) -> Self {
         self.api_url = api_url.to_string();
         self
     }
 
     /// Sets an api version
-    /// 
+    ///
     /// # Example:
     /// ```rust
     /// use fast_vk::instance;
-    /// 
-    /// let instance = instance::InstanceBuilder::new()
+    ///
+    /// let instance = instance::Builder::new()
     ///     .api_version(String::from("5.144"));
-    /// 
+    ///
     /// assert_eq!(
     ///     instance,
-    ///     instance::InstanceBuilder {
+    ///     instance::Builder {
     ///         api_version: String::from("5.144"),
-    ///         ..instance::InstanceBuilder::default()
+    ///         ..instance::Builder::default()
     ///     }
     /// );
     /// ```
-    pub fn api_version<T>(mut self, api_version: T ) -> Self
-    where 
-        T: ToString
-    {
+    pub fn api_version(mut self, api_version: impl ToString) -> Self {
         self.api_version = api_version.to_string();
         self
     }
 
     /// Sets time between http requests
-    /// 
+    ///
     /// # Example:
     /// ```rust
     /// use std::time::Duration;
     /// use fast_vk::instance;
-    /// 
-    /// let instance = instance::InstanceBuilder::new()
+    ///
+    /// let instance = instance::Builder::new()
     ///     .time_between_requests(Duration::from_millis(300));
-    /// 
+    ///
     /// assert_eq!(
     ///     instance,
-    ///     instance::InstanceBuilder {
+    ///     instance::Builder {
     ///         time_between_requests: Duration::from_millis(300),
-    ///         ..instance::InstanceBuilder::default()
+    ///         ..instance::Builder::default()
     ///     }
     /// );
     /// ```
-    pub const fn time_between_requests(mut self, time_between_requests: std::time::Duration) -> Self {
+    pub const fn time_between_requests(
+        mut self,
+        time_between_requests: std::time::Duration,
+    ) -> Self {
         self.time_between_requests = time_between_requests;
         self
     }
-    
+
     /// Builds an [`Instance`]
-    /// 
+    ///
     /// # Example:
     /// ```rust
-    /// use HyperClient;
+    /// use hyper::Client;
+    /// use hyper_tls::HttpsConnector;
     /// use std::time::Duration;
     /// use fast_vk::instance;
-    /// 
-    /// let instance = instance::InstanceBuilder::new()
+    ///
+    /// let instance = instance::Builder::new()
     ///     .token(String::from("123456789"))
     ///     .build()
     ///     .unwrap();
-    /// 
+    ///
     /// assert_eq!(
     ///     instance,
     ///     instance::Instance {
     ///         token: String::from("123456789"),
-    ///         http_client: Client::new(),
+    ///         http_client: Client::builder().build(HttpsConnector::new()),
     ///         api_url: String::from("https://api.vk.com/"),
     ///         api_version: String::from("5.103"),
     ///         time_between_requests: Duration::from_millis(334)
     ///     }
     /// );
     /// ```
-    /// 
+    ///
     /// # Errors
-    /// This method fails whenever token haven't passed 
+    /// This method fails whenever token haven't passed
     pub fn build(self) -> Result<Instance<C>, BuildError> {
         if let None | Some("") = self.token.as_deref() {
             return Err(BuildError::MissingParameter(String::from("token")));
@@ -265,7 +264,7 @@ mod tests {
             instance,
             Instance {
                 token: String::from("token"),
-                http_client: hyper::client::Client::builder().build(HttpsConnector::new()),
+                http_client: hyper::client::Client::builder().build(httpsconnector::new()),
                 api_url: String::from("https://example.com/"),
                 api_version: String::from("5.103"),
                 time_between_requests: Duration::from_millis(334)
@@ -302,7 +301,7 @@ mod tests {
             .token(String::from("123456789"))
             .build()
             .unwrap();
-     
+
         assert_eq!(
             instance,
             Instance {

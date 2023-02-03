@@ -50,13 +50,13 @@ impl Instance<HyperClient> {
         Builder::new()
     }
 
-    /// Constructs vector of `Instances` from any [`IntoIterator`] of tokens
+    /// Constructs vector of `Instances` from any [`Iterator`] of tokens
     ///
     /// Example:
     /// ```rust
     /// use fast_vk::Instance;
     ///
-    /// let instances = Instance::from_tokens(["123456789", "1111"]).unwrap();
+    /// let instances = Instance::from_tokens(["123456789", "1111"].into_iter()).unwrap();
     ///
     /// assert_eq!(
     ///     instances,
