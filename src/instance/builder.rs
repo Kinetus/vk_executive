@@ -264,7 +264,7 @@ mod tests {
             instance,
             Instance {
                 token: String::from("token"),
-                http_client: hyper::client::Client::builder().build(httpsconnector::new()),
+                http_client: hyper::client::Client::builder().build(HttpsConnector::new()),
                 api_url: String::from("https://example.com/"),
                 api_version: String::from("5.103"),
                 time_between_requests: Duration::from_millis(334)
