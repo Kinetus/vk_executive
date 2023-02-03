@@ -54,7 +54,7 @@ impl Instance<HyperClient> {
     ///
     /// Example:
     /// ```rust
-    /// use fast_vk::Instance;
+    /// use vk_executive::Instance;
     ///
     /// let instances = Instance::from_tokens(["123456789", "1111"].into_iter()).unwrap();
     ///

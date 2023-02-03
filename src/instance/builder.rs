@@ -80,7 +80,7 @@ where
     ///
     /// # Example:
     /// ```rust
-    /// use fast_vk::instance;
+    /// use vk_executive::instance;
     ///
     /// let instance = instance::Builder::new()
     ///     .token(String::from("12345"));
@@ -107,7 +107,7 @@ where
     /// ```rust
     /// use hyper::client::Client;
     /// use hyper_tls::HttpsConnector;
-    /// use fast_vk::instance;
+    /// use vk_executive::instance;
     ///
     /// let instance = instance::Builder::new()
     ///     .http_client(Client::builder().build(HttpsConnector::new()));
@@ -129,7 +129,7 @@ where
     ///
     /// # Example:
     /// ```rust
-    /// use fast_vk::instance;
+    /// use vk_executive::instance;
     ///
     /// let instance = instance::Builder::new()
     ///     .api_url(String::from("https:://vk.ru"));
@@ -151,7 +151,7 @@ where
     ///
     /// # Example:
     /// ```rust
-    /// use fast_vk::instance;
+    /// use vk_executive::instance;
     ///
     /// let instance = instance::Builder::new()
     ///     .api_version(String::from("5.144"));
@@ -174,7 +174,7 @@ where
     /// # Example:
     /// ```rust
     /// use std::time::Duration;
-    /// use fast_vk::instance;
+    /// use vk_executive::instance;
     ///
     /// let instance = instance::Builder::new()
     ///     .time_between_requests(Duration::from_millis(300));
@@ -202,7 +202,7 @@ where
     /// use hyper::Client;
     /// use hyper_tls::HttpsConnector;
     /// use std::time::Duration;
-    /// use fast_vk::instance;
+    /// use vk_executive::instance;
     ///
     /// let instance = instance::Builder::new()
     ///     .token(String::from("123456789"))

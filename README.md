@@ -1,16 +1,16 @@
-# Fast VK 🚀
+# VK Executive 🚀
 
 Library for fast data collection from [VK](https://vk.com)
 
 ```toml
 [dependencies]
-fast_vk = "0.6"
+vk_executive = "0.6"
 ```
 
 # Example
 
 ```rust
-use fast_vk::{Client, Instance};
+use vk_executive::{Client, Instance};
 use vk_method::{Method, Params};
 
 #[tokio::main]

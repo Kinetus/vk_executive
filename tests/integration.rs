@@ -4,7 +4,7 @@ use vk_method::Method;
 use serde_json::Value;
 use dotenv::dotenv;
 use std::env;
-use fast_vk::{Instance, Client};
+use vk_executive::{Instance, Client};
 use vk_method::{PairsArray, Params};
 
 use futures::future::join_all;

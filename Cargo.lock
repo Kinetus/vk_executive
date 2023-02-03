@@ -194,7 +194,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "fast_vk"
+name = "vk_executive"
 version = "0.6.1"
 dependencies = [
  "anyhow",

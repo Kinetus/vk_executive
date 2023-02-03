@@ -42,7 +42,7 @@ where
         + 'static,
     <C as Service<Request<Body>>>::Future: Send,
 {
-    /// Builds `Client` from any type that can be converted into `ExactSizeIterator` over Instance
+    /// Builds `Client` from any `ExactSizeIterator` over Instance
     pub fn from_instances<Instances>(instances: Instances) -> Self
     where
         Instances: Iterator<Item = Instance<C>> + ExactSizeIterator,
@@ -64,7 +64,7 @@ where
     /// # Example:
     ///
     /// ```rust
-    /// use fast_vk::{Instance, Client};
+    /// use vk_executive::{Instance, Client};
     /// use vk_method::{Method, Params};
     /// #
     /// # use std::env;
@@ -117,19 +117,22 @@ where
     }
 }
 
-// #[cfg(feature = "thisvk")]
-// #[async_trait::async_trait]
-// impl<C> thisvk::API for Client<C>
-// where
-//     C: Service<Request<Body>> + Send,
-// {
-//     type Error = Error;
-//
-//     async fn method<T>(&self, method: Method) -> Result<T>
-//     where
-//         for<'de> T: serde::Deserialize<'de>,
-//     {
-//         serde_json::from_value(self.method(method).await?)
-//             .map_err(|error| Error::Custom(error.into()))
-//     }
-// }
+#[cfg(feature = "thisvk")]
+#[async_trait::async_trait]
+impl<C> thisvk::API for Client<C>
+where
+    C: Service<Request<Body>, Response = http::Response<Body>, Error = hyper::Error>
+        + Send
+        + Sync
+        + 'static,
+{
+    type Error = crate::Error;
+
+    async fn method<T>(&self, method: Method) -> Result<T>
+    where
+        for<'de> T: serde::Deserialize<'de>,
+    {
+        let value = self.method(method).await?;
+        Ok(serde_json::from_value(value).unwrap())
+    }
+}
