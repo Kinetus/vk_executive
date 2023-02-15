@@ -3,14 +3,14 @@ use std::sync::Arc;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-/// The Errors that may occur when processing a Method.
+/// The Errors that may occur during processing a [`vk_method::Method`].
 #[derive(thiserror::Error, Debug, Clone)]
 pub enum Error {
-    /// Represents any VK error
+    /// Represents any single VK error
     #[error("VK error({0})")]
     VK(VkError),
     /// Represents any shared VK error
-    /// For example: [6] Too many requests
+    /// For example: [\6] Too many requests
     #[error("Shared VK error({0})")]
     SharedVK(Arc<VkError>),
     /// Represents any network error

@@ -1,7 +1,7 @@
 use crate::{Result, VkError, VkResult};
 use std::result::Result as StdResult;
 
-use super::{Instance, Message, ResultSender, TaskReceiver, MAX_METHODS_IN_EXECUTE};
+use super::{HttpsClient, Config, Message, ResultSender, TaskReceiver, MAX_METHODS_IN_EXECUTE};
 
 use tokio::sync::mpsc;
 use vk_execute_compiler::ExecuteCompiler;
@@ -22,28 +22,25 @@ use url::Url;
 
 use vk_method::{Method, PairsArray, Params};
 
-/// One method processing unit based on [`Instance`]
-pub struct Worker<C>
+/// One method processing unit based on [`Config`]
+pub struct Worker<C: HttpsClient>
 where
-    C: Service<Request<Body>> + Send,
+    <C as Service<Request<Body>>>::Future: Send,
 {
     #[allow(dead_code)]
     id: usize,
     #[allow(dead_code)]
     thread: JoinHandle<()>,
-    phantom: PhantomData<Instance<C>>,
+    phantom: PhantomData<Config<C>>,
 }
 
-impl<C> Worker<C>
+impl<C: HttpsClient> Worker<C>
 where
-    C: Service<Request<Body>, Response = http::Response<Body>, Error = hyper::Error>
-        + Send
-        + 'static,
     <C as Service<Request<Body>>>::Future: Send,
 {
-    pub fn new(id: usize, instance: Instance<C>, receiver: TaskReceiver) -> Self {
+    pub fn new(id: usize, config: Config<C>, receiver: TaskReceiver) -> Self {
         let thread = tokio::spawn(async {
-            Self::thread_loop(instance, receiver).await;
+            Self::thread_loop(config, receiver).await;
         });
 
         Self {
@@ -53,7 +50,7 @@ where
         }
     }
 
-    async fn thread_loop(mut instance: Instance<C>, receiver: TaskReceiver) -> Option<()> {
+    async fn thread_loop(mut config: Config<C>, receiver: TaskReceiver) -> Option<()> {
         loop {
             let mut receiver = receiver.lock().await;
 
@@ -66,24 +63,24 @@ where
                             .ok()?;
 
                     if methods_with_senders.is_empty() {
-                        Self::process_method(&method, sender, &mut instance);
+                        Self::process_method(&method, sender, &mut config);
                     } else {
                         methods_with_senders.push((method, sender));
-                        Self::process_execute(methods_with_senders, &mut instance);
+                        Self::process_execute(methods_with_senders, &mut config);
                     }
                 }
             }
 
             //important! Unlock mutex before sleep
             drop(receiver);
-            sleep(instance.time_between_requests).await;
+            sleep(config.time_between_requests).await;
         }
     }
 
     /// Complete single method process up to sending result
-    fn process_method(method: &Method, sender: ResultSender, instance: &mut Instance<C>) {
-        let request = Self::prepare_request(method, instance);
-        let request_future = instance.http_client.call(request);
+    fn process_method(method: &Method, sender: ResultSender, config: &mut Config<C>) {
+        let request = Self::prepare_request(method, config);
+        let request_future = config.http_client.call(request);
 
         tokio::spawn(async {
             let result = Self::handle_method(request_future).await;
@@ -123,13 +120,13 @@ where
         Ok(methods)
     }
 
-    fn prepare_request(method: &Method, instance: &mut Instance<C>) -> Request<Body> {
-        let mut url = Url::parse(&format!("{}/method/{}", &instance.api_url, method.name)).unwrap();
+    fn prepare_request(method: &Method, config: &mut Config<C>) -> Request<Body> {
+        let mut url = Url::parse(&format!("{}/method/{}", &config.api_url, method.name)).unwrap();
 
         {
             let mut pairs = url.query_pairs_mut();
-            query(&mut pairs, &[("access_token", &instance.token)]);
-            query(&mut pairs, &[("v", &instance.api_version)]);
+            query(&mut pairs, &[("access_token", &config.token)]);
+            query(&mut pairs, &[("v", &config.api_version)]);
             query(&mut pairs, &method.params);
         }
 
@@ -204,7 +201,7 @@ where
     /// Complete `execute` method process up to sending results
     fn process_execute(
         methods_with_senders: Vec<(Method, ResultSender)>,
-        instance: &mut Instance<C>,
+        config: &mut Config<C>,
     ) {
         let (methods, senders): (Vec<_>, Vec<_>) = methods_with_senders.into_iter().unzip();
         let execute = ExecuteCompiler::compile(methods);
@@ -214,9 +211,9 @@ where
             Params::try_from(PairsArray([("code", execute)])).unwrap(),
         );
 
-        let request = Self::prepare_request(&execute, instance);
+        let request = Self::prepare_request(&execute, config);
 
-        let request_future = instance.http_client.call(request);
+        let request_future = config.http_client.call(request);
 
         tokio::spawn(async {
             let result = Self::handle_execute(request_future).await;

@@ -10,7 +10,7 @@ use tower::Service;
 pub type HyperClient = hyper::client::Client<HttpsConnector<HttpConnector>>;
 
 #[derive(Debug)]
-pub struct Instance<C>
+pub struct Config<C>
 where
     C: Service<Request<Body>>,
 {
@@ -21,7 +21,7 @@ where
     pub time_between_requests: Duration,
 }
 
-impl<C> PartialEq for Instance<C>
+impl<C> PartialEq for Config<C>
 where
     C: Service<Request<Body>>,
 {
@@ -33,36 +33,36 @@ where
     }
 }
 
-impl Default for Instance<HyperClient> {
+impl Default for Config<HyperClient> {
     fn default() -> Self {
         Self::builder().build().unwrap()
     }
 }
 
-impl Instance<HyperClient> {
-    /// Constructs a new [`Instance`]
+impl Config<HyperClient> {
+    /// Constructs a new [`Config`]
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Creates a [`InstanceBuilder`] to configure a [`Instance`]
+    /// Creates a [`Builder`] to configure a [`Config`]
     pub fn builder() -> Builder<HyperClient> {
         Builder::new()
     }
 
-    /// Constructs vector of `Instances` from any [`Iterator`] of tokens
+    /// Constructs vector of `Configs` from any [`Iterator`] of tokens
     ///
     /// Example:
     /// ```rust
-    /// use vk_executive::Instance;
+    /// use vk_executive::Config;
     ///
-    /// let instances = Instance::from_tokens(["123456789", "1111"].into_iter()).unwrap();
+    /// let configs = Config::from_tokens(["123456789", "1111"].into_iter()).unwrap();
     ///
     /// assert_eq!(
-    ///     instances,
+    ///     configs,
     ///     vec![
-    ///         Instance::builder().token("123456789".to_string()).build().unwrap(),
-    ///         Instance::builder().token("1111".to_string()).build().unwrap()
+    ///         Config::builder().token("123456789".to_string()).build().unwrap(),
+    ///         Config::builder().token("1111".to_string()).build().unwrap()
     ///     ]
     /// )
     /// ```
@@ -76,7 +76,7 @@ impl Instance<HyperClient> {
 
 }
 
-impl<C> Instance<C>
+impl<C> Config<C>
 where
     C: Service<Request<Body>> + Clone,
 {
@@ -88,12 +88,12 @@ where
         Tokens: Iterator<Item = Token>,
         Token: ToString,
     {
-        let mut instances = Vec::new();
+        let mut configs = Vec::new();
 
         for token in tokens {
-            instances.push(prototype.clone().token(token).build()?);
+            configs.push(prototype.clone().token(token).build()?);
         }
 
-        Ok(instances)
+        Ok(configs)
     }
 }

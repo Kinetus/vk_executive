@@ -2,7 +2,7 @@ mod build_error;
 pub use build_error::BuildError;
 use hyper_tls::HttpsConnector;
 
-use super::Instance;
+use super::Config;
 
 use std::time::Duration;
 
@@ -80,16 +80,16 @@ where
     ///
     /// # Example:
     /// ```rust
-    /// use vk_executive::instance;
+    /// use vk_executive::config;
     ///
-    /// let instance = instance::Builder::new()
+    /// let config = config::Builder::new()
     ///     .token(String::from("12345"));
     ///
     /// assert_eq!(
-    ///     instance,
-    ///     instance::Builder {
+    ///     config,
+    ///     config::Builder {
     ///         token: Some(String::from("12345")),
-    ///         ..instance::Builder::default()
+    ///         ..config::Builder::default()
     ///     }
     /// );
     /// ```
@@ -107,16 +107,16 @@ where
     /// ```rust
     /// use hyper::client::Client;
     /// use hyper_tls::HttpsConnector;
-    /// use vk_executive::instance;
+    /// use vk_executive::config;
     ///
-    /// let instance = instance::Builder::new()
+    /// let config = config::Builder::new()
     ///     .http_client(Client::builder().build(HttpsConnector::new()));
     ///
     /// assert_eq!(
-    ///     instance,
-    ///     instance::Builder {
+    ///     config,
+    ///     config::Builder {
     ///         http_client: Client::builder().build(HttpsConnector::new()),
-    ///         ..instance::Builder::default()
+    ///         ..config::Builder::default()
     ///     }
     /// );
     /// ```
@@ -129,16 +129,16 @@ where
     ///
     /// # Example:
     /// ```rust
-    /// use vk_executive::instance;
+    /// use vk_executive::config;
     ///
-    /// let instance = instance::Builder::new()
+    /// let config = config::Builder::new()
     ///     .api_url(String::from("https:://vk.ru"));
     ///
     /// assert_eq!(
-    ///     instance,
-    ///     instance::Builder {
+    ///     config,
+    ///     config::Builder {
     ///         api_url: String::from("https:://vk.ru"),
-    ///         ..instance::Builder::default()
+    ///         ..config::Builder::default()
     ///     }
     /// );
     /// ```
@@ -151,16 +151,16 @@ where
     ///
     /// # Example:
     /// ```rust
-    /// use vk_executive::instance;
+    /// use vk_executive::config;
     ///
-    /// let instance = instance::Builder::new()
+    /// let config = config::Builder::new()
     ///     .api_version(String::from("5.144"));
     ///
     /// assert_eq!(
-    ///     instance,
-    ///     instance::Builder {
+    ///     config,
+    ///     config::Builder {
     ///         api_version: String::from("5.144"),
-    ///         ..instance::Builder::default()
+    ///         ..config::Builder::default()
     ///     }
     /// );
     /// ```
@@ -174,16 +174,16 @@ where
     /// # Example:
     /// ```rust
     /// use std::time::Duration;
-    /// use vk_executive::instance;
+    /// use vk_executive::config;
     ///
-    /// let instance = instance::Builder::new()
+    /// let config = config::Builder::new()
     ///     .time_between_requests(Duration::from_millis(300));
     ///
     /// assert_eq!(
-    ///     instance,
-    ///     instance::Builder {
+    ///     config,
+    ///     config::Builder {
     ///         time_between_requests: Duration::from_millis(300),
-    ///         ..instance::Builder::default()
+    ///         ..config::Builder::default()
     ///     }
     /// );
     /// ```
@@ -195,23 +195,23 @@ where
         self
     }
 
-    /// Builds an [`Instance`]
+    /// Builds an [`Config`]
     ///
     /// # Example:
     /// ```rust
     /// use hyper::Client;
     /// use hyper_tls::HttpsConnector;
     /// use std::time::Duration;
-    /// use vk_executive::instance;
+    /// use vk_executive::config;
     ///
-    /// let instance = instance::Builder::new()
+    /// let config = config::Builder::new()
     ///     .token(String::from("123456789"))
     ///     .build()
     ///     .unwrap();
     ///
     /// assert_eq!(
-    ///     instance,
-    ///     instance::Instance {
+    ///     config,
+    ///     config::Config {
     ///         token: String::from("123456789"),
     ///         http_client: Client::builder().build(HttpsConnector::new()),
     ///         api_url: String::from("https://api.vk.com/"),
@@ -223,12 +223,12 @@ where
     ///
     /// # Errors
     /// This method fails whenever token haven't passed
-    pub fn build(self) -> Result<Instance<C>, BuildError> {
+    pub fn build(self) -> Result<Config<C>, BuildError> {
         if let None | Some("") = self.token.as_deref() {
             return Err(BuildError::MissingParameter(String::from("token")));
         };
 
-        Ok(Instance {
+        Ok(Config {
             token: self.token.unwrap(),
             http_client: self.http_client,
             api_url: self.api_url,
@@ -244,25 +244,25 @@ mod tests {
 
     #[test]
     fn missing_token() {
-        let instance = Builder::new().build();
+        let config = Builder::new().build();
 
         assert_eq!(
-            instance.err(),
+            config.err(),
             Some(BuildError::MissingParameter(String::from("token")))
         );
     }
 
     #[test]
     fn custom_api_url() {
-        let instance = Builder::new()
+        let config = Builder::new()
             .api_url("https://example.com/")
             .token(String::from("token"))
             .build()
             .unwrap();
 
         assert_eq!(
-            instance,
-            Instance {
+            config,
+            Config {
                 token: String::from("token"),
                 http_client: hyper::client::Client::builder().build(HttpsConnector::new()),
                 api_url: String::from("https://example.com/"),
@@ -274,7 +274,7 @@ mod tests {
 
     #[test]
     fn custom_all() {
-        let instance = Builder::new()
+        let config = Builder::new()
             .api_url("https://api.vk.ru/")
             .api_version("5.143")
             .token(String::from("123456789"))
@@ -284,8 +284,8 @@ mod tests {
             .unwrap();
 
         assert_eq!(
-            instance,
-            Instance {
+            config,
+            Config {
                 token: String::from("123456789"),
                 http_client: hyper::client::Client::builder().build(HttpsConnector::new()),
                 api_url: String::from("https://api.vk.ru/"),
@@ -297,14 +297,14 @@ mod tests {
 
     #[test]
     fn custom_token() {
-        let instance = Builder::new()
+        let config = Builder::new()
             .token(String::from("123456789"))
             .build()
             .unwrap();
 
         assert_eq!(
-            instance,
-            Instance {
+            config,
+            Config {
                 token: String::from("123456789"),
                 http_client: hyper::client::Client::builder().build(HttpsConnector::new()),
                 api_url: String::from("https://api.vk.com/"),

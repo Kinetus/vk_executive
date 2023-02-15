@@ -1,7 +1,7 @@
 mod message;
 mod worker;
 
-use crate::Instance;
+use crate::Config;
 use message::Message;
 use worker::Worker;
 
@@ -25,35 +25,53 @@ use tower::Service;
 
 pub const MAX_METHODS_IN_EXECUTE: u8 = 25;
 
-/// An asynchronous `Client` to make VK Requests with.
-pub struct Client<C>
+// https://github.com/rust-lang/rust/issues/41517#issuecomment-1100644808
+pub trait HttpsClient:
+    Service<Request<Body>, Response = http::Response<Body>, Error = hyper::Error>
+    + Send
+    + Sync
+    + 'static
 where
-    C: Service<Request<Body>> + Send + Sync + 'static,
+    Self::Future: Send,
 {
-    sender: TaskSender,
-    workers: Vec<Worker<C>>,
 }
 
-impl<C> Client<C>
+impl<T> HttpsClient for T
 where
-    C: Service<Request<Body>, Response = http::Response<Body>, Error = hyper::Error>
+    T: Service<Request<Body>, Response = http::Response<Body>, Error = hyper::Error>
         + Send
         + Sync
         + 'static,
+    Self::Future: Send,
+{
+}
+
+/// An asynchronous `Client` to make VK Requests with.
+pub struct Client<C: HttpsClient>
+where
     <C as Service<Request<Body>>>::Future: Send,
 {
-    /// Builds `Client` from any `ExactSizeIterator` over Instance
-    pub fn from_instances<Instances>(instances: Instances) -> Self
+    sender: TaskSender,
+    #[allow(dead_code)]
+    workers: Vec<Worker<C>>,
+}
+
+impl<C: HttpsClient> Client<C>
+where
+    <C as Service<Request<Body>>>::Future: Send,
+{
+    /// Builds `Client` from any `ExactSizeIterator` over Config
+    pub fn from_configs<Configs>(configs: Configs) -> Self
     where
-        Instances: Iterator<Item = Instance<C>> + ExactSizeIterator,
+        Configs: Iterator<Item = Config<C>> + ExactSizeIterator,
     {
-        let mut workers = Vec::with_capacity(instances.len());
+        let mut workers = Vec::with_capacity(configs.len());
 
         let (sender, receiver) = mpsc::unbounded_channel();
         let receiver = Arc::new(Mutex::new(receiver));
 
-        for (index, instance) in instances.into_iter().enumerate() {
-            workers.push(Worker::new(index, instance, receiver.clone()));
+        for (index, config) in configs.into_iter().enumerate() {
+            workers.push(Worker::new(index, config, receiver.clone()));
         }
 
         Self { sender, workers }
@@ -64,7 +82,7 @@ where
     /// # Example:
     ///
     /// ```rust
-    /// use vk_executive::{Instance, Client};
+    /// use vk_executive::{Config, Client};
     /// use vk_method::{Method, Params};
     /// #
     /// # use std::env;
@@ -72,8 +90,8 @@ where
     /// # dotenv().unwrap();
     /// #
     /// # async fn main() {
-    /// # let instances = Instance::from_tokens(env::var("tokens").unwrap().split(",").take(1)).unwrap();
-    /// # let pool = Client::from_instances(instances.into_iter());
+    /// # let configs = Config::from_tokens(env::var("tokens").unwrap().split(",").take(1)).unwrap();
+    /// # let pool = Client::from_configs(configs.into_iter());
     ///
     /// let mut params = Params::new();
     /// params.insert("user_id", 1);
@@ -97,6 +115,8 @@ where
     /// );
     /// # }
     /// ```
+    /// # Errors
+    /// If this function encounters any form of network, serialization or VK error, an error variant will be returned.
     ///
     /// # Panics
     ///
@@ -119,12 +139,9 @@ where
 
 #[cfg(feature = "thisvk")]
 #[async_trait::async_trait]
-impl<C> thisvk::API for Client<C>
+impl<C: HttpsClient> thisvk::API for Client<C>
 where
-    C: Service<Request<Body>, Response = http::Response<Body>, Error = hyper::Error>
-        + Send
-        + Sync
-        + 'static,
+    <C as Service<Request<Body>>>::Future: Send,
 {
     type Error = crate::Error;
 
