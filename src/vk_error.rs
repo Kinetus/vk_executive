@@ -25,7 +25,7 @@ impl<T> From<VkResult<T>> for StdResult<T, Error> {
     fn from(value: VkResult<T>) -> Self {
         match value {
             VkResult::Response(response) => Ok(response),
-            VkResult::Error(error) => Err(Error::VK(error)),
+            VkResult::Error(error) => Err(Error::from(error)),
         }
     }
 }

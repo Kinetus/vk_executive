@@ -8,7 +8,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub enum Error {
     /// Represents any single VK error
     #[error("VK error({0})")]
-    VK(VkError),
+    VK(Box<VkError>),
     /// Represents any shared VK error
     /// For example: [\6] Too many requests
     #[error("Shared VK error({0})")]
@@ -23,7 +23,7 @@ pub enum Error {
 
 impl From<VkError> for Error {
     fn from(error: VkError) -> Self {
-        Self::VK(error)
+        Self::VK(Box::new(error))
     }
 }
 

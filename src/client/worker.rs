@@ -1,7 +1,7 @@
 use crate::{Result, VkError, VkResult};
 use std::result::Result as StdResult;
 
-use super::{HttpsClient, Config, Message, ResultSender, TaskReceiver, MAX_METHODS_IN_EXECUTE};
+use super::{Config, HttpsClient, Message, ResultSender, TaskReceiver, MAX_METHODS_IN_EXECUTE};
 
 use tokio::sync::mpsc;
 use vk_execute_compiler::ExecuteCompiler;
@@ -199,10 +199,7 @@ where
     }
 
     /// Complete `execute` method process up to sending results
-    fn process_execute(
-        methods_with_senders: Vec<(Method, ResultSender)>,
-        config: &mut Config<C>,
-    ) {
+    fn process_execute(methods_with_senders: Vec<(Method, ResultSender)>, config: &mut Config<C>) {
         let (methods, senders): (Vec<_>, Vec<_>) = methods_with_senders.into_iter().unzip();
         let execute = ExecuteCompiler::compile(methods);
 
