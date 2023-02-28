@@ -10,7 +10,7 @@ use http::request::Request;
 use hyper::body::Body;
 use tower::Service;
 
-use super::HyperClient;
+use crate::client::HyperClient;
 
 #[derive(Debug)]
 pub struct Builder<C>

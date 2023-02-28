@@ -46,6 +46,10 @@ where
 {
 }
 
+pub type HyperClient = hyper::client::Client<HttpsConnector<HttpConnector>>;
+use hyper::client::HttpConnector;
+use hyper_tls::HttpsConnector;
+
 /// An asynchronous `Client` to make VK Requests with.
 pub struct Client<C: HttpsClient>
 where

@@ -1,16 +1,14 @@
 mod builder;
 pub use builder::{BuildError, Builder};
+use hyper::body::Body;
 use std::time::Duration;
 
 use http::request::Request;
-use hyper::{body::Body, client::HttpConnector};
-use hyper_tls::HttpsConnector;
 use tower::Service;
-
-pub type HyperClient = hyper::client::Client<HttpsConnector<HttpConnector>>;
+use crate::client::HyperClient;
 
 #[derive(Debug)]
-pub struct Config<C>
+pub struct Config<C = HyperClient>
 where
     C: Service<Request<Body>>,
 {
