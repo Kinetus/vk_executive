@@ -1021,7 +1021,7 @@ dependencies = [
 
 [[package]]
 name = "vk_executive"
-version = "0.8.1"
+version = "0.8.2"
 dependencies = [
  "async-trait",
  "comma_serde_urlencoded",

@@ -92,7 +92,7 @@ where
         let response = Self::handle_request(request_future).await?;
 
         let result = <StdResult<Value, VkError>>::from(
-            serde_json::from_value::<VkResult<Value>>(response).map_err(Arc::new)?,
+            serde_json::from_value::<VkResult<Value>>(response).unwrap(),
         );
 
         result.map_err(Into::into)
@@ -145,8 +145,7 @@ where
     ) -> Result<Value> {
         let mut response = request_future.await.map_err(Arc::new)?;
         let value: Value =
-            serde_json::from_slice(&to_bytes(response.body_mut()).await.map_err(Arc::new)?)
-                .map_err(Arc::new)?;
+            serde_json::from_slice(&to_bytes(response.body_mut()).await.map_err(Arc::new)?).unwrap();
 
         Ok(value)
     }
@@ -163,11 +162,11 @@ where
             .map_or_else(Vec::new, |errors| serde_json::from_value(errors).unwrap());
 
         let execute_response = <StdResult<Value, VkError>>::from(
-            serde_json::from_value::<VkResult<Value>>(response).map_err(Arc::new)?,
+            serde_json::from_value::<VkResult<Value>>(response).unwrap(),
         )
         .map_err(Arc::new)?;
 
-        let responses: Vec<Value> = serde_json::from_value(execute_response).map_err(Arc::new)?;
+        let responses: Vec<Value> = serde_json::from_value(execute_response).unwrap();
 
         let mut result = Vec::new();
 

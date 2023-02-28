@@ -16,9 +16,9 @@ pub enum Error {
     /// Represents any network error
     #[error("Network error({0})")]
     Network(Arc<hyper::Error>),
-    /// Represents any serialization error
-    #[error("Serializion error({0})")]
-    Serialization(Arc<serde_json::Error>),
+    // /// Represents any serialization error
+    // #[error("Serializion error({0})")]
+    // Serialization(Arc<serde_json::Error>),
 }
 
 impl From<VkError> for Error {
@@ -38,9 +38,9 @@ impl From<Arc<hyper::Error>> for Error {
         Self::Network(error) 
     }
 }
-
-impl From<Arc<serde_json::Error>> for Error {
-    fn from(error: Arc<serde_json::Error>) -> Self {
-        Self::Serialization(error)
-    }
-}
+//
+// impl From<Arc<serde_json::Error>> for Error {
+//     fn from(error: Arc<serde_json::Error>) -> Self {
+//         Self::Serialization(error)
+//     }
+// }
