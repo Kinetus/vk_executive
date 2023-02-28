@@ -51,7 +51,7 @@ use hyper::client::HttpConnector;
 use hyper_tls::HttpsConnector;
 
 /// An asynchronous `Client` to make VK Requests with.
-pub struct Client<C: HttpsClient>
+pub struct Client<C: HttpsClient = HyperClient>
 where
     <C as Service<Request<Body>>>::Future: Send,
 {
