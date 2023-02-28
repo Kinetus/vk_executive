@@ -161,7 +161,6 @@ where
             .remove("execute_errors")
             .map_or_else(Vec::new, |errors| serde_json::from_value(errors).unwrap());
         
-        println!("!!!!!!{:?}!!!!!!!", response);
         let execute_response = <StdResult<Value, VkError>>::from(
             serde_json::from_value::<VkResult<Value>>(response).unwrap(),
         )
